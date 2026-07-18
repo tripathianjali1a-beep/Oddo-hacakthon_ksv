@@ -1,19 +1,33 @@
 'use client';
 import { useState } from 'react';
+import { contactsApi } from '@/lib/api';
 
 export default function ContactPage() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' });
+  const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', message: '' });
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setLoading(false);
-    setSent(true);
-    setForm({ name: '', email: '', phone: '', message: '' });
-    setTimeout(() => setSent(false), 5000);
+    setError(null);
+    try {
+      await contactsApi.create({
+        name: form.name,
+        email: form.email,
+        phone: form.phone || undefined,
+        subject: form.subject || undefined,
+        message: form.message,
+      });
+      setSent(true);
+      setForm({ name: '', email: '', phone: '', subject: '', message: '' });
+      setTimeout(() => setSent(false), 5000);
+    } catch (err) {
+      setError('Failed to send inquiry. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -103,6 +117,24 @@ export default function ContactPage() {
                 placeholder="+1 (555) 019-2834"
                 className="input-field text-sm"
               />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate uppercase tracking-wide mb-1.5">Subject</label>
+              <select
+                value={form.subject}
+                onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                className="input-field text-sm"
+              >
+                <option value="">Select a subject</option>
+                <option value="general">General Inquiry</option>
+                <option value="rental">Equipment Rental</option>
+                <option value="property">Property Listing</option>
+                <option value="enterprise">Enterprise Rates</option>
+                <option value="support">Technical Support</option>
+                <option value="billing">Billing & Payments</option>
+                <option value="other">Other</option>
+              </select>
             </div>
 
             <div>

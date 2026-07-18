@@ -1,41 +1,138 @@
-'use client';
-import { useState } from 'react';
+﻿'use client';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+
+interface ApiOrder {
+  id: number;
+  order_number: string;
+  status: string;
+  delivery_method: string;
+  return_due_at: string | null;
+  returned_at: string | null;
+  confirmed_at: string | null;
+  pickup_at: string | null;
+  total_amount: number;
+  deposit_amount: number;
+  deposit_status: string | null;
+  deposit_deduction: number;
+  late_fee: number;
+  created_at: string;
+  user?: { full_name: string; email: string; phone?: string };
+  items: Array<{ product?: { name: string }; quantity: number; unit_price: number; rental_days: number; subtotal: number }>;
+}
+
+const STATUS_DISPLAY: Record<string, { label: string; color: string }> = {
+  pending:    { label: 'Quotation',   color: 'bg-cyan-100 text-cyan-800 border-cyan-300' },
+  quotation:  { label: 'Quotation',   color: 'bg-cyan-100 text-cyan-800 border-cyan-300' },
+  confirmed:  { label: 'Reserved',    color: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
+  picked_up:  { label: 'Picked Up',   color: 'bg-amber-100 text-amber-800 border-amber-300' },
+  active:     { label: 'Active',      color: 'bg-amber-100 text-amber-800 border-amber-300' },
+  late:       { label: 'Late Return', color: 'bg-rose-100 text-rose-800 border-rose-300' },
+  returned:   { label: 'Returned',    color: 'bg-blue-100 text-blue-800 border-blue-300' },
+  completed:  { label: 'Completed',   color: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
+  cancelled:  { label: 'Cancelled',   color: 'bg-slate-200 text-slate-700 border-slate-300' },
+};
 
 interface OrderItem {
   id: string;
+  _apiId: number;
   customer: string;
-  status: 'Reserved' | 'Picked Up' | 'Late pickup' | 'Quotation' | 'Cancelled' | 'Late Return';
+  status: string;
   statusColor: string;
   pickupDate: string;
   returnDate: string;
   total: number;
-  invoiceStatus: 'Invoiced' | 'Confirmed' | 'Quotation Sent' | 'Nothing to Invoice';
+  invoiceStatus: string;
   invoiceColor: string;
-  category: 'Today' | 'Pickup' | 'Return' | 'Late';
+  category: 'Today' | 'Pickup' | 'Return' | 'Late' | 'All';
   deposit: number;
+  depositStatus: string | null;
+  depositDeduction: number;
+  lateFee: number;
   email: string;
   phone: string;
   item: string;
+  apiStatus: string;
 }
 
-const initialOrders: OrderItem[] = [
-  { id: 'SO0001', customer: 'Wood Corner', status: 'Reserved', statusColor: 'bg-emerald-100 text-emerald-800 border-emerald-300', pickupDate: 'Jul 6, 6:30pm', returnDate: 'Jul 10, 6:30pm', total: 1520, invoiceStatus: 'Invoiced', invoiceColor: 'bg-blue-100 text-blue-800 border-blue-300', category: 'Today', deposit: 500, email: 'contact@woodcorner.com', phone: '+1 (555) 019-2834', item: 'CAT 320 Excavator Kit' },
-  { id: 'SO0005', customer: 'Smith', status: 'Picked Up', statusColor: 'bg-amber-100 text-amber-800 border-amber-300', pickupDate: 'Jul 10, 6:30pm', returnDate: 'Jul 13, 8:30pm', total: 1520, invoiceStatus: 'Confirmed', invoiceColor: 'bg-emerald-100 text-emerald-800 border-emerald-300', category: 'Pickup', deposit: 300, email: 'smith.j@example.com', phone: '+1 (555) 204-8812', item: 'Forklift 8FGU25' },
-  { id: 'SO0010', customer: 'John', status: 'Late pickup', statusColor: 'bg-rose-100 text-rose-800 border-rose-300', pickupDate: 'Jul 6, 6:30pm', returnDate: 'Jul 10, 6:30pm', total: 1520, invoiceStatus: 'Invoiced', invoiceColor: 'bg-blue-100 text-blue-800 border-blue-300', category: 'Return', deposit: 400, email: 'john@example.com', phone: '+1 (555) 981-0034', item: 'Commercial Generator 50kVA' },
-  { id: 'SO0012', customer: 'Alex', status: 'Quotation', statusColor: 'bg-cyan-100 text-cyan-800 border-cyan-300', pickupDate: 'Jul 8, 9:00am', returnDate: 'Jul 11, 9:00am', total: 1520, invoiceStatus: 'Quotation Sent', invoiceColor: 'bg-purple-100 text-purple-800 border-purple-300', category: 'Pickup', deposit: 250, email: 'alex@example.com', phone: '+1 (555) 330-7721', item: 'Cinema Camera Package' },
-  { id: 'SO0020', customer: 'Sam', status: 'Cancelled', statusColor: 'bg-slate-200 text-slate-700 border-slate-300', pickupDate: 'Jul 3, 9:00pm', returnDate: 'Jul 11, 9:00am', total: 1520, invoiceStatus: 'Nothing to Invoice', invoiceColor: 'bg-gray-100 text-gray-700 border-gray-300', category: 'Late', deposit: 150, email: 'sam@example.com', phone: '+1 (555) 819-2045', item: 'Scaffolding Lift 40ft' },
-  { id: 'SO0013', customer: 'Smith', status: 'Late Return', statusColor: 'bg-rose-100 text-rose-800 border-rose-300', pickupDate: 'Jul 4, 10:00am', returnDate: 'Jul 9, 5:00pm', total: 1450, invoiceStatus: 'Invoiced', invoiceColor: 'bg-blue-100 text-blue-800 border-blue-300', category: 'Today', deposit: 500, email: 'smith.j@example.com', phone: '+1 (555) 204-8812', item: 'CAT 320 Excavator Kit' },
-  { id: 'SO0008', customer: 'Prater', status: 'Reserved', statusColor: 'bg-emerald-100 text-emerald-800 border-emerald-300', pickupDate: 'Jul 11, 8:00am', returnDate: 'Jul 15, 6:00pm', total: 50, invoiceStatus: 'Quotation Sent', invoiceColor: 'bg-purple-100 text-purple-800 border-purple-300', category: 'Return', deposit: 100, email: 'prater@example.com', phone: '+1 (555) 440-1029', item: 'Power Drill Set' },
-  { id: 'SO0011', customer: 'Mark wood', status: 'Reserved', statusColor: 'bg-emerald-100 text-emerald-800 border-emerald-300', pickupDate: 'Jul 12, 9:00am', returnDate: 'Jul 16, 5:00pm', total: 1450, invoiceStatus: 'Confirmed', invoiceColor: 'bg-emerald-100 text-emerald-800 border-emerald-300', category: 'Return', deposit: 450, email: 'mark@wood.com', phone: '+1 (555) 902-1182', item: 'Scaffolding Lift 40ft' },
-];
+function mapApiOrder(o: ApiOrder): OrderItem {
+  const disp = STATUS_DISPLAY[o.status] || { label: o.status, color: 'bg-gray-100 text-gray-700' };
+  const now = new Date();
+  const returnDue = o.return_due_at ? new Date(o.return_due_at) : null;
+  const isLate = returnDue && returnDue < now && !['returned','completed','cancelled'].includes(o.status);
+  const today = new Date().toDateString();
+  let category: 'Today'|'Pickup'|'Return'|'Late'|'All' = 'All';
+  if (isLate) category = 'Late';
+  else if (returnDue && returnDue.toDateString() === today) category = 'Today';
+  else if (['pending','quotation','confirmed'].includes(o.status)) category = 'Pickup';
+  else if (['picked_up','active'].includes(o.status)) category = 'Return';
+  const fmt = (d:string|null) => d ? new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
+  const firstItem = o.items[0];
+  const invColor = o.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+    : o.status === 'pending' ? 'bg-purple-100 text-purple-800 border-purple-300'
+    : o.status === 'cancelled' ? 'bg-gray-100 text-gray-700 border-gray-300'
+    : 'bg-blue-100 text-blue-800 border-blue-300';
+  return {
+    id: o.order_number, _apiId: o.id,
+    customer: o.user?.full_name || o.user?.email || 'Customer',
+    status: disp.label, statusColor: disp.color,
+    pickupDate: fmt(o.confirmed_at || o.created_at),
+    returnDate: fmt(o.return_due_at),
+    total: o.total_amount, deposit: o.deposit_amount,
+    depositStatus: o.deposit_status, depositDeduction: o.deposit_deduction,
+    lateFee: o.late_fee,
+    invoiceStatus: o.status === 'confirmed' ? 'Confirmed' : o.status === 'pending' ? 'Quotation Sent' : o.status === 'cancelled' ? 'Nothing to Invoice' : 'Invoiced',
+    invoiceColor: invColor,
+    category, email: o.user?.email||'', phone: o.user?.phone||'',
+    item: firstItem?.product?.name || `${o.items.length} item(s)`,
+    apiStatus: o.status,
+  };
+}
 
+const initialOrders: OrderItem[] = [];
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderItem[]>(initialOrders);
   const [view, setView] = useState<'list' | 'kanban'>('list');
   const [searchQ, setSearchQ] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<'All' | 'Today' | 'Pickup' | 'Return' | 'Late'>('All');
   const [last7Days, setLast7Days] = useState(true);
+
+  const [apiLoading, setApiLoading] = useState(false);
+  const [actionOrderId, setActionOrderId] = useState<number | null>(null);
+  const [actionType, setActionType] = useState<string>('');
+  const [lateFeeInput, setLateFeeInput] = useState('');
+
+  const getToken = () => typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+
+  const fetchOrders = useCallback(async () => {
+    setApiLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/orders/admin/all?limit=100`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      if (res.ok) {
+        const data: ApiOrder[] = await res.json();
+        setOrders(data.map(mapApiOrder));
+      }
+    } catch {}
+    setApiLoading(false);
+  }, []);
+
+  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+
+  const updateOrderStatus = async (apiId: number, status: string, extraData?: Record<string, unknown>) => {
+    try {
+      const res = await fetch(`${API_BASE}/orders/${apiId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+        body: JSON.stringify({ status, ...extraData }),
+      });
+      if (res.ok) { await fetchOrders(); triggerToast(`Order updated: ${status.replace('_',' ')}`); }
+    } catch {}
+  };
+
 
   // Modal Views for New Order Page (Image 1) and Invoice Page (Image 3)
   const [modalMode, setModalMode] = useState<'none' | 'newOrder' | 'invoice'>('none');
@@ -370,7 +467,7 @@ export default function AdminOrdersPage() {
       {modalMode === 'newOrder' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-5xl w-full overflow-hidden shadow-2xl border border-slate/20 flex flex-col max-h-[92vh]">
-            {/* Top Bar from Image 1: [ New ] Rental order [ ✔ ] [ ✖ ] */}
+            {/* Top Bar from Image 1: [ New ] Rental order [ âœ” ] [ âœ– ] */}
             <div className="bg-navy text-white px-6 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="px-2.5 py-1 rounded bg-purple-600 text-[11px] font-black uppercase tracking-wider">New</span>
@@ -529,7 +626,7 @@ export default function AdminOrdersPage() {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate uppercase mb-1">Rental Period (Start date → End date)</label>
+                    <label className="block text-xs font-bold text-slate uppercase mb-1">Rental Period (Start date â†’ End date)</label>
                     <div className="grid grid-cols-2 gap-2">
                       <input
                         type="date"
@@ -581,7 +678,7 @@ export default function AdminOrdersPage() {
                       <tr>
                         <td className="py-3 px-4">
                           <span>Computers</span>
-                          <span className="block text-[10px] text-slate font-normal">[{orderForm.startDate} → {orderForm.endDate}]</span>
+                          <span className="block text-[10px] text-slate font-normal">[{orderForm.startDate} â†’ {orderForm.endDate}]</span>
                         </td>
                         <td className="py-3 px-4 text-center">20</td>
                         <td className="py-3 px-4">Units</td>
@@ -614,7 +711,7 @@ export default function AdminOrdersPage() {
       {modalMode === 'invoice' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in overflow-y-auto">
           <div className="bg-white rounded-2xl max-w-5xl w-full overflow-hidden shadow-2xl border border-slate/20 flex flex-col max-h-[92vh]">
-            {/* Top Bar from Image 3: [ New ] [ ✔ ] [ ✖ ] */}
+            {/* Top Bar from Image 3: [ New ] [ âœ” ] [ âœ– ] */}
             <div className="bg-navy text-white px-6 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="px-2.5 py-1 rounded bg-purple-600 text-[11px] font-black uppercase tracking-wider">New</span>
@@ -756,7 +853,7 @@ export default function AdminOrdersPage() {
                       <tr>
                         <td className="py-3 px-4">
                           <span>Computers</span>
-                          <span className="block text-[10px] text-slate font-normal">[{orderForm.startDate} → {orderForm.endDate}]</span>
+                          <span className="block text-[10px] text-slate font-normal">[{orderForm.startDate} â†’ {orderForm.endDate}]</span>
                         </td>
                         <td className="py-3 px-4 text-center">20</td>
                         <td className="py-3 px-4">Units</td>

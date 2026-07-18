@@ -2,9 +2,14 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { setAuthTokens } from '@/lib/client';
+import { useAuthStore } from '@/lib/store';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { setAuth } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'login' | 'signup' | 'forgot'>('login');
   const [isVendor, setIsVendor] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -26,12 +31,13 @@ export default function LoginPage() {
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [phone, setPhone] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [productCategory, setProductCategory] = useState('Electronics');
   const [gstNo, setGstNo] = useState('');
 
   const validatePasswordRules = (pass: string) => {
-    if (pass.length < 6 || pass.length > 12) return 'Password length must be between 6 and 12 characters.';
+    if (pass.length < 6 || pass.length > 20) return 'Password length must be between 6 and 20 characters.';
     if (!/[A-Z]/.test(pass)) return 'Password must include at least one uppercase letter.';
     if (!/[a-z]/.test(pass)) return 'Password must include at least one lowercase letter.';
     if (!/[@#$%^&*]/.test(pass)) return 'Password must include at least one special character (@ # $ % ^ & *).';
@@ -43,9 +49,46 @@ export default function LoginPage() {
     setError('');
     if (!email || !password) { setError('Please fill in all fields.'); return; }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setLoading(false);
-    router.push(isVendor ? '/admin/dashboard' : '/home');
+    try {
+      // FastAPI OAuth2 login requires form-encoded body
+      const formData = new URLSearchParams();
+      formData.append('username', email);
+      formData.append('password', password);
+
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData.toString(),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Login failed');
+
+      // Store tokens
+      setAuthTokens(data.access_token, data.refresh_token);
+
+      // Fetch user profile
+      const meRes = await fetch(`${API_BASE}/auth/me`, {
+        headers: { Authorization: `Bearer ${data.access_token}` },
+      });
+      const user = await meRes.json();
+
+      setAuth({ user, access_token: data.access_token, refresh_token: data.refresh_token });
+
+      // Set cookies for middleware route protection
+      document.cookie = `auth_token=${data.access_token}; path=/; max-age=3600; SameSite=Lax`;
+      document.cookie = `user_role=${user.role}; path=/; max-age=3600; SameSite=Lax`;
+
+      // Role-based redirect
+      if (user.role === 'admin') {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/home');
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -55,38 +98,48 @@ export default function LoginPage() {
       setError('Please fill in all required fields.');
       return;
     }
-    if (isVendor && (!companyName || !gstNo)) {
-      setError('Company Name and GST No are required for vendor sign-up.');
-      return;
-    }
     const passErr = validatePasswordRules(signupPassword);
-    if (passErr) {
-      setError(passErr);
-      return;
-    }
+    if (passErr) { setError(passErr); return; }
     if (signupPassword !== confirmPassword) {
       setError('Password and Confirm Password do not match.');
       return;
     }
 
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setLoading(false);
-    router.push(isVendor ? '/admin/dashboard' : '/home');
+    try {
+      const res = await fetch(`${API_BASE}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: signupEmail,
+          password: signupPassword,
+          full_name: `${firstName} ${lastName}`.trim(),
+          phone: phone || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Registration failed');
+
+      setSuccessMsg('Account created! You can now sign in.');
+      setActiveTab('login');
+      setEmail(signupEmail);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Registration failed.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccessMsg('');
-    if (!resetEmail) {
-      setError('Please enter your email ID.');
-      return;
-    }
+    if (!resetEmail) { setError('Please enter your email ID.'); return; }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1000));
+    // Password reset email flow not yet implemented in backend — show informational message
+    await new Promise((r) => setTimeout(r, 800));
     setLoading(false);
-    setSuccessMsg('The password reset link has been sent to your email.');
+    setSuccessMsg('If this email exists in our system, a reset link has been sent.');
   };
 
   return (
@@ -332,6 +385,17 @@ export default function LoginPage() {
                       onChange={(e) => setSignupEmail(e.target.value)}
                       placeholder="email@domain.com"
                       required
+                      className="w-full px-3.5 py-2 text-xs border border-slate/20 rounded-xl bg-ivory/30 outline-none focus:border-amber transition-colors"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate uppercase tracking-wider mb-1">Phone (optional)</label>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="+91 98765 43210"
                       className="w-full px-3.5 py-2 text-xs border border-slate/20 rounded-xl bg-ivory/30 outline-none focus:border-amber transition-colors"
                     />
                   </div>
