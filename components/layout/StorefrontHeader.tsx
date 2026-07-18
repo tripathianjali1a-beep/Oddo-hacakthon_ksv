@@ -39,14 +39,14 @@ export default function StorefrontHeader() {
   }, []);
 
   return (
-    <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'bg-white/80 backdrop-blur-xl border-b border-slate/15 shadow-[0_4px_20px_rgba(15,23,42,0.06)]'
-          : 'bg-white/95 backdrop-blur-md border-b border-transparent'
-      }`}
-    >
-      <div className="max-w-[1440px] mx-auto px-6 h-[68px] flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-50 px-3 sm:px-5 pt-3 sm:pt-4">
+      <div
+        className={`detach max-w-[1440px] mx-auto px-5 h-[64px] flex items-center justify-between gap-4 rounded-2xl border backdrop-blur-xl transition-all duration-300 ${
+          scrolled
+            ? 'bg-white/85 border-slate/15 shadow-[0_16px_40px_-12px_rgba(15,23,42,0.28)]'
+            : 'bg-white/75 border-white/60 shadow-[0_10px_30px_-10px_rgba(15,23,42,0.22)]'
+        }`}
+      >
         {/* Brand + Search */}
         <div className="flex items-center gap-6 min-w-0">
           <Link href="/home" className="shrink-0 transition-transform hover:scale-[1.03] active:scale-95">
@@ -123,7 +123,7 @@ export default function StorefrontHeader() {
 
       {/* Mobile dropdown */}
       {mobileOpen && (
-        <div className="lg:hidden border-t border-slate/10 bg-white px-6 py-3 animate-fade-in">
+        <div className="lg:hidden max-w-[1440px] mx-auto mt-2 rounded-2xl border border-slate/15 bg-white/90 backdrop-blur-xl shadow-[0_16px_40px_-12px_rgba(15,23,42,0.28)] px-5 py-3 animate-fade-in">
           <div className="relative flex items-center mb-3 md:hidden">
             <span className="material-symbols-outlined absolute left-2.5 text-slate/50" style={{ fontSize: '18px' }}>search</span>
             <input

@@ -92,7 +92,13 @@ export default function LoginPage() {
             {activeTab === 'login' ? (
               <>
                 <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Welcome back</h1>
-                <p style={{ fontSize: '14px', color: '#64748B', marginBottom: '24px' }}>Sign in to your LuxRent account</p>
+                <p style={{ fontSize: '14px', color: '#64748B', marginBottom: '16px' }}>Sign in to your LuxRent account</p>
+
+                <div style={{ marginBottom: '20px', background: 'rgba(217,119,6,0.06)', border: '1px solid rgba(217,119,6,0.2)', borderRadius: '10px', padding: '10px 14px', fontSize: '12px', color: '#0F172A', lineHeight: 1.6 }}>
+                  <strong style={{ color: '#D97706' }}>Demo logins</strong><br />
+                  Vendor — <code>vendor@luxrent.com</code> / <code>admin</code><br />
+                  Customer — <code>customer@luxrent.com</code> / <code>customer</code>
+                </div>
 
                 {error && (
                   <div style={{ marginBottom: '16px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', fontSize: '13px', padding: '10px 14px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>

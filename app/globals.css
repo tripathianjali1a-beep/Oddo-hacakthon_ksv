@@ -37,9 +37,9 @@
   --radius-2xl: 28px;
   --radius-full: 9999px;
 
-  /* Shadows — softer, layered elevation */
-  --shadow-card: 0 1px 2px rgba(15,23,42,0.04), 0 6px 20px -10px rgba(15,23,42,0.12);
-  --shadow-card-hover: 0 8px 30px -8px rgba(15,23,42,0.18), 0 2px 6px rgba(15,23,42,0.05);
+  /* Shadows — floating, layered elevation */
+  --shadow-card: 0 2px 4px rgba(15,23,42,0.04), 0 16px 34px -14px rgba(15,23,42,0.22);
+  --shadow-card-hover: 0 14px 44px -12px rgba(15,23,42,0.30), 0 4px 10px rgba(15,23,42,0.06);
 }
 
 /* Typography scale (used across pages as text-display / text-h1..h3) */
@@ -160,6 +160,40 @@ body {
   box-shadow: var(--shadow-card-hover);
   transform: translateY(-3px);
 }
+
+/* ────────────────────────────────────────
+   .detach — reusable detached-corner motif
+   for elements that are NOT .card (header,
+   category tiles, dark glass panels, …)
+──────────────────────────────────────── */
+.detach { position: relative; }
+.detach::before,
+.detach::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0.55;
+  transition: opacity 0.25s ease, width 0.25s ease, height 0.25s ease;
+}
+.detach::before {
+  top: 9px; left: 9px;
+  border-top: 2px solid var(--color-amber);
+  border-left: 2px solid var(--color-amber);
+  border-top-left-radius: 6px;
+}
+.detach::after {
+  bottom: 9px; right: 9px;
+  border-bottom: 2px solid var(--color-amber);
+  border-right: 2px solid var(--color-amber);
+  border-bottom-right-radius: 6px;
+}
+.detach:hover::before, .detach:hover::after { opacity: 1; width: 22px; height: 22px; }
+
+/* Brighter brackets for dark surfaces */
+.detach-dark::before, .detach-dark::after { border-color: var(--color-amber-bright); opacity: 0.7; }
 
 /* Buttons */
 .btn-primary {

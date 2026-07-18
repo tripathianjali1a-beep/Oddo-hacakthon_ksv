@@ -115,7 +115,7 @@ export default function HomePage() {
   return (
     <div className="overflow-x-hidden">
       {/* ══════════════ HERO ══════════════ */}
-      <section className="relative min-h-[92vh] flex items-center overflow-hidden bg-navy">
+      <section className="detach detach-dark relative min-h-[86vh] flex items-center overflow-hidden bg-navy rounded-[28px] mx-3 sm:mx-5 mt-2 shadow-[0_24px_60px_-20px_rgba(15,23,42,0.45)]">
         {/* Parallax backdrop */}
         <ParallaxImage
           src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1600&q=80"
@@ -218,7 +218,7 @@ export default function HomePage() {
       </section>
 
       {/* ══════════════ MARQUEE STRIP ══════════════ */}
-      <div className="bg-navy-container border-y border-white/5 py-4 overflow-hidden">
+      <div className="detach detach-dark bg-navy-container rounded-2xl mx-3 sm:mx-5 my-4 py-4 overflow-hidden shadow-[0_16px_40px_-16px_rgba(15,23,42,0.4)] border border-white/5">
         <div className="flex whitespace-nowrap animate-marquee">
           {[...marqueeItems, ...marqueeItems].map((item, i) => (
             <span key={i} className="mx-8 text-on-navy text-sm font-medium flex items-center gap-3">
@@ -249,7 +249,7 @@ export default function HomePage() {
             <Reveal key={cat.name} variant="up" delay={i * 80}>
               <button
                 onClick={() => setActiveCat(cat.name)}
-                className="group relative w-full h-52 rounded-2xl overflow-hidden text-left"
+                className="detach detach-dark group w-full h-52 rounded-2xl overflow-hidden text-left"
               >
                 <img
                   src={cat.img}
@@ -271,7 +271,7 @@ export default function HomePage() {
       </section>
 
       {/* ══════════════ PARALLAX SHOWCASE BANNER ══════════════ */}
-      <section className="relative h-[60vh] min-h-[420px] flex items-center overflow-hidden">
+      <section className="detach detach-dark relative h-[60vh] min-h-[420px] flex items-center overflow-hidden rounded-[28px] mx-3 sm:mx-5 my-4 shadow-[0_24px_60px_-20px_rgba(15,23,42,0.45)]">
         <ParallaxImage
           src="https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?w=1600&q=80"
           alt="Coastal villa"
@@ -415,7 +415,7 @@ export default function HomePage() {
       {/* ══════════════ CTA ══════════════ */}
       <section className="max-w-[1440px] mx-auto px-6 py-16 md:py-24">
         <Reveal variant="scale">
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-navy-container via-navy to-navy-container">
+          <div className="detach detach-dark relative overflow-hidden rounded-3xl bg-gradient-to-br from-navy-container via-navy to-navy-container">
             {/* Glow blobs */}
             <div className="absolute -top-24 -right-16 w-80 h-80 rounded-full bg-amber/25 blur-[110px] animate-blob" />
             <div className="absolute -bottom-24 -left-16 w-80 h-80 rounded-full bg-blue-500/20 blur-[110px] animate-blob" style={{ animationDelay: '4s' }} />
@@ -463,7 +463,7 @@ export default function HomePage() {
 
               {/* Earnings visual card */}
               <div className="lg:justify-self-end w-full max-w-[24rem] lg:max-w-none">
-                <div className="animate-float rounded-2xl bg-white/[0.07] backdrop-blur-xl border border-white/15 p-6 shadow-2xl">
+                <div className="detach detach-dark animate-float rounded-2xl bg-white/[0.07] backdrop-blur-xl border border-white/15 p-6 shadow-2xl">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-on-navy text-xs uppercase tracking-wider">Est. monthly earnings</p>

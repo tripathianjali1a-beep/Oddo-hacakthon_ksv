@@ -23,7 +23,19 @@ function createConnection(): Database.Database {
   db.pragma('foreign_keys = ON');
   migrate(db);
   seed(db);
+  ensureDemoUsers(db);
   return db;
+}
+
+// Keep the demo logins working on every startup (upsert by email),
+// even if the database was seeded before these credentials existed.
+function ensureDemoUsers(db: Database.Database) {
+  const upsert = db.prepare(`
+    INSERT INTO users (name, email, password, role) VALUES (@name, @email, @password, @role)
+    ON CONFLICT(email) DO UPDATE SET password = excluded.password, role = excluded.role, name = excluded.name
+  `);
+  upsert.run({ name: 'Demo Vendor', email: 'vendor@luxrent.com', password: 'admin', role: 'vendor' });
+  upsert.run({ name: 'Demo Customer', email: 'customer@luxrent.com', password: 'customer', role: 'customer' });
 }
 
 export function getDb(): Database.Database {
@@ -285,6 +297,6 @@ function seed(db: Database.Database) {
 
   // Seed demo users
   const insertUser = db.prepare(`INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)`);
-  insertUser.run('Demo Customer', 'customer@luxrent.com', 'password', 'customer');
-  insertUser.run('Demo Vendor', 'vendor@luxrent.com', 'password', 'vendor');
+  insertUser.run('Demo Customer', 'customer@luxrent.com', 'customer', 'customer');
+  insertUser.run('Demo Vendor', 'vendor@luxrent.com', 'admin', 'vendor');
 }
