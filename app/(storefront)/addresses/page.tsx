@@ -125,7 +125,7 @@ export default function AddressesPage() {
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-slate uppercase tracking-wider mb-1">Phone</label>
-                  <input type="tel" value={form.phone} onChange={(e) => setForm({...form, phone: e.target.value})}
+                  <input type="tel" value={form.phone || ''} onChange={(e) => setForm({...form, phone: e.target.value})}
                     className="w-full px-3 py-2 text-xs border border-slate/20 rounded-xl bg-ivory/30 outline-none focus:border-amber" />
                 </div>
               </div>
@@ -136,7 +136,7 @@ export default function AddressesPage() {
               </div>
               <div>
                 <label className="block text-[11px] font-bold text-slate uppercase tracking-wider mb-1">Address Line 2 (optional)</label>
-                <input type="text" value={form.address_line2} onChange={(e) => setForm({...form, address_line2: e.target.value})}
+                <input type="text" value={form.address_line2 || ''} onChange={(e) => setForm({...form, address_line2: e.target.value})}
                   className="w-full px-3 py-2 text-xs border border-slate/20 rounded-xl bg-ivory/30 outline-none focus:border-amber" />
               </div>
               <div className="grid grid-cols-3 gap-3">
@@ -147,12 +147,12 @@ export default function AddressesPage() {
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-slate uppercase tracking-wider mb-1">State</label>
-                  <input type="text" value={form.state} onChange={(e) => setForm({...form, state: e.target.value})}
+                  <input type="text" value={form.state || ''} onChange={(e) => setForm({...form, state: e.target.value})}
                     className="w-full px-3 py-2 text-xs border border-slate/20 rounded-xl bg-ivory/30 outline-none focus:border-amber" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-slate uppercase tracking-wider mb-1">PIN Code</label>
-                  <input type="text" value={form.postal_code} onChange={(e) => setForm({...form, postal_code: e.target.value})}
+                  <input type="text" value={form.postal_code || ''} onChange={(e) => setForm({...form, postal_code: e.target.value})}
                     className="w-full px-3 py-2 text-xs border border-slate/20 rounded-xl bg-ivory/30 outline-none focus:border-amber" />
                 </div>
               </div>
