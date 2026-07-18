@@ -31,7 +31,13 @@ export default function AdminProductsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: '', brand: '', sku: '', category: 'Furniture', rate: '', status: 'active' });
   const [page, setPage] = useState(1);
+  const [toast, setToast] = useState<string | null>(null);
   const PER_PAGE = 5;
+
+  const triggerToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3500);
+  };
 
   const filtered = products.filter((p) => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase()) || p.brand.toLowerCase().includes(search.toLowerCase());
@@ -56,12 +62,21 @@ export default function AdminProductsPage() {
     setProducts((prev) => [...prev, { ...newProduct, id: Date.now(), variants: [], rate: parseFloat(newProduct.rate) || 0, img: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=100&q=80' }]);
     setNewProduct({ name: '', brand: '', sku: '', category: 'Furniture', rate: '', status: 'active' });
     setShowAddModal(false);
+    triggerToast(`Product '${newProduct.name}' added to inventory.`);
   };
 
   const statusBadge = (s: string) => s === 'active' ? 'badge-green' : s === 'draft' ? 'badge-amber' : 'badge-slate';
 
   return (
     <div className="p-6 md:p-8 max-w-[1440px] relative">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-navy text-white px-5 py-3.5 rounded-xl shadow-2xl border border-amber/30 flex items-center gap-3 animate-slide-up">
+          <span className="material-symbols-outlined shrink-0 text-amber" style={{ fontSize: '20px' }}>check_circle</span>
+          <span className="text-sm font-semibold">{toast}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="sticky top-0 bg-white border-b border-slate/10 -mx-6 md:-mx-8 -mt-6 md:-mt-8 px-6 md:px-8 py-4 mb-6 z-10 flex items-center justify-between">
         <div>
@@ -69,7 +84,10 @@ export default function AdminProductsPage() {
           <p className="text-slate text-xs mt-0.5">Manage inventory, variants, and rental pricing.</p>
         </div>
         <div className="flex gap-2">
-          <button className="btn-secondary text-xs py-2 px-4 flex items-center justify-center gap-1.5">
+          <button
+            onClick={() => triggerToast('Exporting catalog inventory to CSV... Check your downloads folder.')}
+            className="btn-secondary text-xs py-2 px-4 flex items-center justify-center gap-1.5"
+          >
             <span className="material-symbols-outlined shrink-0" style={{fontSize:'16px'}}>download</span>
             <span>Export CSV</span>
           </button>
@@ -163,7 +181,10 @@ export default function AdminProductsPage() {
                     <td className="table-cell text-right font-currency font-medium text-navy">${product.rate}.00</td>
                     <td className="table-cell text-center"><span className={statusBadge(product.status)}>{product.status === 'active' ? 'Active' : 'Draft'}</span></td>
                     <td className="table-cell opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="text-slate hover:text-amber transition-colors flex items-center justify-center">
+                      <button
+                        onClick={() => triggerToast(`Options menu opened for ${product.name} (${product.sku})`)}
+                        className="text-slate hover:text-amber transition-colors flex items-center justify-center"
+                      >
                         <span className="material-symbols-outlined shrink-0" style={{fontSize:'18px'}}>more_vert</span>
                       </button>
                     </td>
@@ -212,7 +233,12 @@ export default function AdminProductsPage() {
                 </div>
               ))}
             </div>
-            <button className="btn-secondary w-full text-xs py-2 mt-4 flex items-center justify-center"><span>Manage Price Lists</span></button>
+            <button
+              onClick={() => triggerToast('Price lists & promotional rules configuration dialog opened.')}
+              className="btn-secondary w-full text-xs py-2 mt-4 flex items-center justify-center"
+            >
+              <span>Manage Price Lists</span>
+            </button>
           </div>
 
           {/* Rental Periods */}
@@ -221,7 +247,11 @@ export default function AdminProductsPage() {
             <p className="text-xs text-slate mb-4">Standardized durations available for variants.</p>
             <div className="grid grid-cols-2 gap-2">
               {rentalPeriods.map((rp) => (
-                <button key={rp.n} className="border border-slate/15 rounded-lg p-3 text-center hover:border-amber transition-all group">
+                <button
+                  key={rp.n}
+                  onClick={() => triggerToast(`Selected ${rp.n} ${rp.label} standard tier duration (${rp.disc || 'Base rate'})`)}
+                  className="border border-slate/15 rounded-lg p-3 text-center hover:border-amber transition-all group"
+                >
                   <p className="text-navy font-bold text-xl group-hover:text-amber transition-colors">{rp.n}</p>
                   <p className="text-xs text-slate">{rp.label}</p>
                   {rp.disc && <p className="text-[10px] font-semibold text-emerald-600 mt-0.5">{rp.disc}</p>}

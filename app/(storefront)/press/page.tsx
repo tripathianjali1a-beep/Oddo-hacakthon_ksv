@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 const pressReleases = [
   { date: 'October 14, 2024', title: 'LuxRent Secures $45M Series B to Expand Enterprise Equipment & Architecture Fleet', source: 'Wall Street Journal' },
   { date: 'August 02, 2024', title: 'How AI-Driven Inspection Protocols Are Revolutionizing Commercial Asset Sharing', source: 'Forbes' },
@@ -7,8 +9,23 @@ const pressReleases = [
 ];
 
 export default function PressPage() {
+  const [toast, setToast] = useState<string | null>(null);
+
+  const triggerToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3500);
+  };
+
   return (
-    <div className="bg-ivory/40 min-h-screen pb-20">
+    <div className="bg-ivory/40 min-h-screen pb-20 relative">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-navy text-white px-5 py-3.5 rounded-xl shadow-2xl border border-amber/30 flex items-center gap-3 animate-slide-up">
+          <span className="material-symbols-outlined shrink-0 text-amber" style={{ fontSize: '20px' }}>check_circle</span>
+          <span className="text-sm font-semibold">{toast}</span>
+        </div>
+      )}
+
       {/* Hero */}
       <section className="bg-navy text-white py-20 px-6 text-center">
         <div className="max-w-3xl mx-auto">
@@ -31,7 +48,7 @@ export default function PressPage() {
                 <p className="text-xs font-semibold text-amber uppercase tracking-wider">{pr.source} • {pr.date}</p>
                 <h3 className="font-bold text-navy text-lg mt-1">{pr.title}</h3>
               </div>
-              <button onClick={() => alert(`Opening press release from ${pr.source}...`)} className="btn-secondary px-4 py-2 text-xs shrink-0">Read Article</button>
+              <button onClick={() => triggerToast(`Opened press release: "${pr.title}" (${pr.source})`)} className="btn-secondary px-4 py-2 text-xs shrink-0">Read Article</button>
             </div>
           ))}
         </div>
@@ -40,7 +57,7 @@ export default function PressPage() {
           <div className="bg-white rounded-xl p-6 border border-slate/15 shadow-md">
             <h3 className="font-bold text-navy text-lg mb-2">Media & Kit Resources</h3>
             <p className="text-slate text-xs mb-4">Download official vector logos, executive headshots, and brand color tokens.</p>
-            <button onClick={() => alert('Downloading LuxRent_Media_Kit_2024.zip')} className="btn-primary w-full py-2.5 text-xs flex items-center justify-center gap-1.5">
+            <button onClick={() => triggerToast('Downloading LuxRent_Media_Kit_2024.zip archive... Check downloads.')} className="btn-primary w-full py-2.5 text-xs flex items-center justify-center gap-1.5">
               <span className="material-symbols-outlined shrink-0" style={{ fontSize: '18px' }}>download</span>
               <span>Download Media Kit (ZIP)</span>
             </button>

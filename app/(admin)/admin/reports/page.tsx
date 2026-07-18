@@ -16,9 +16,23 @@ const categoryBreakdown = [
 
 export default function AdminReportsPage() {
   const [range, setRange] = useState('q3');
+  const [toast, setToast] = useState<string | null>(null);
+
+  const triggerToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3500);
+  };
 
   return (
-    <div className="p-6 md:p-8 space-y-8 max-w-[1440px] mx-auto">
+    <div className="p-6 md:p-8 space-y-8 max-w-[1440px] mx-auto relative">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-navy text-white px-5 py-3.5 rounded-xl shadow-2xl border border-amber/30 flex items-center gap-3 animate-slide-up">
+          <span className="material-symbols-outlined shrink-0 text-amber" style={{ fontSize: '20px' }}>check_circle</span>
+          <span className="text-sm font-semibold">{toast}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate/15 pb-6">
         <div>
@@ -36,7 +50,7 @@ export default function AdminReportsPage() {
             <option value="ytd">Year to Date (2024)</option>
           </select>
           <button
-            onClick={() => alert('Exporting Q3 Financial Ledger (CSV + PDF)...')}
+            onClick={() => triggerToast('Exporting Q3 Financial Ledger (CSV + PDF)... Check downloads.')}
             className="btn-primary py-2 px-4 text-sm flex items-center justify-center gap-1.5"
           >
             <span className="material-symbols-outlined shrink-0" style={{ fontSize: '18px' }}>download</span>

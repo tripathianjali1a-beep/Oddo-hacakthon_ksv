@@ -10,11 +10,25 @@ const docs = [
 
 export default function AdminHelpPage() {
   const [search, setSearch] = useState('');
+  const [toast, setToast] = useState<string | null>(null);
+
+  const triggerToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3500);
+  };
 
   const filtered = docs.filter((d) => d.title.toLowerCase().includes(search.toLowerCase()) || d.desc.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="p-6 md:p-8 space-y-8 max-w-[1440px] mx-auto">
+    <div className="p-6 md:p-8 space-y-8 max-w-[1440px] mx-auto relative">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-navy text-white px-5 py-3.5 rounded-xl shadow-2xl border border-amber/30 flex items-center gap-3 animate-slide-up">
+          <span className="material-symbols-outlined shrink-0 text-amber" style={{ fontSize: '20px' }}>check_circle</span>
+          <span className="text-sm font-semibold">{toast}</span>
+        </div>
+      )}
+
       <div>
         <h1 className="text-h1 text-navy">Admin Knowledge Base & Help</h1>
         <p className="text-slate text-sm mt-1">Operational guidelines, API docs, and internal workflow SOPs.</p>
@@ -32,7 +46,7 @@ export default function AdminHelpPage() {
           />
         </div>
         <button
-          onClick={() => alert('Opening live chat with Level 3 Platform Engineering Support...')}
+          onClick={() => triggerToast('Connecting to live chat with Level 3 Platform Engineering Support...')}
           className="btn-primary py-2.5 px-5 text-sm shrink-0 flex items-center justify-center gap-1.5"
         >
           <span className="material-symbols-outlined shrink-0" style={{ fontSize: '18px' }}>support_agent</span>
@@ -49,7 +63,7 @@ export default function AdminHelpPage() {
               <p className="text-slate text-xs mt-2 leading-relaxed">{item.desc}</p>
             </div>
             <button
-              onClick={() => alert(`Reading internal SOP: ${item.title}`)}
+              onClick={() => triggerToast(`Opened SOP documentation: ${item.title}`)}
               className="text-amber text-xs font-semibold flex items-center gap-1 mt-6 hover:underline"
             >
               <span>Read Documentation</span>

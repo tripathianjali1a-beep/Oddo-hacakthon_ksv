@@ -47,6 +47,12 @@ export default function AdminConfigPage() {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState(0);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const triggerToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3500);
+  };
 
   const handleChange = (key: string, value: string) => {
     setConfig((prev) => ({ ...prev, [key]: value }));
@@ -62,7 +68,15 @@ export default function AdminConfigPage() {
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-[1440px]">
+    <div className="p-6 md:p-8 max-w-[1440px] relative">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-navy text-white px-5 py-3.5 rounded-xl shadow-2xl border border-amber/30 flex items-center gap-3 animate-slide-up">
+          <span className="material-symbols-outlined shrink-0 text-amber" style={{ fontSize: '20px' }}>check_circle</span>
+          <span className="text-sm font-semibold">{toast}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div>
@@ -152,14 +166,25 @@ export default function AdminConfigPage() {
                   <p className="text-sm font-semibold text-navy">Reset All Settings</p>
                   <p className="text-xs text-slate">Revert all configuration to factory defaults.</p>
                 </div>
-                <button className="btn-danger text-xs py-2 px-4 flex items-center justify-center"><span>Reset</span></button>
+                <button
+                  onClick={() => {
+                    setConfig(Object.fromEntries(sections.flatMap((s) => s.fields.map((f) => [f.key, f.value]))));
+                    triggerToast('All configuration settings reset to factory defaults.');
+                  }}
+                  className="btn-danger text-xs py-2 px-4 flex items-center justify-center"
+                >
+                  <span>Reset</span>
+                </button>
               </div>
               <div className="flex items-center justify-between p-4 border border-red-100 rounded-lg">
                 <div>
                   <p className="text-sm font-semibold text-navy">Export Configuration</p>
                   <p className="text-xs text-slate">Download all settings as a JSON backup.</p>
                 </div>
-                <button className="btn-secondary text-xs py-2 px-4 flex items-center justify-center gap-1.5">
+                <button
+                  onClick={() => triggerToast('Exporting system configuration backup to JSON file...')}
+                  className="btn-secondary text-xs py-2 px-4 flex items-center justify-center gap-1.5"
+                >
                   <span className="material-symbols-outlined shrink-0" style={{fontSize:'16px'}}>download</span>
                   <span>Export</span>
                 </button>

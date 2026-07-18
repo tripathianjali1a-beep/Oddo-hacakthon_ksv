@@ -19,6 +19,12 @@ export default function AdminDashboard() {
   const [baseRent, setBaseRent] = useState('2500.00');
   const [daysLate, setDaysLate] = useState('5');
   const [dailyRate, setDailyRate] = useState('1.5');
+  const [toast, setToast] = useState<string | null>(null);
+
+  const triggerToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3500);
+  };
 
   const calculatedFee = (() => {
     const base = parseFloat(baseRent) || 0;
@@ -28,7 +34,15 @@ export default function AdminDashboard() {
   })();
 
   return (
-    <div className="p-6 md:p-8 max-w-[1440px]">
+    <div className="p-6 md:p-8 max-w-[1440px] relative">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-navy text-white px-5 py-3.5 rounded-xl shadow-2xl border border-amber/30 flex items-center gap-3 animate-slide-up">
+          <span className="material-symbols-outlined shrink-0 text-amber" style={{ fontSize: '20px' }}>check_circle</span>
+          <span className="text-sm font-semibold">{toast}</span>
+        </div>
+      )}
+
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8">
         <div>
@@ -128,7 +142,10 @@ export default function AdminDashboard() {
                       <td className={`table-cell font-semibold ${rental.daysLate > 30 ? 'text-red-600' : 'text-amber'}`}>{rental.daysLate} Days</td>
                       <td className="table-cell"><span className={rental.badge}>{rental.badgeLabel}</span></td>
                       <td className="table-cell text-right">
-                        <button className="p-1.5 border border-slate/20 rounded hover:border-amber hover:text-amber text-slate transition-all flex items-center justify-center">
+                        <button
+                          onClick={() => triggerToast(`Action menu opened for ${rental.tenant} (${rental.property})`)}
+                          className="p-1.5 border border-slate/20 rounded hover:border-amber hover:text-amber text-slate transition-all flex items-center justify-center"
+                        >
                           <span className="material-symbols-outlined shrink-0" style={{fontSize:'16px'}}>more_horiz</span>
                         </button>
                       </td>
@@ -200,7 +217,13 @@ export default function AdminDashboard() {
                   <p className="text-[10px] font-semibold text-slate uppercase tracking-wide mb-1">Calculated Fee</p>
                   <p className="text-h3 text-red-600 font-currency">${calculatedFee}</p>
                 </div>
-                <button className="btn-primary text-xs py-2 px-4">Apply</button>
+                <button
+                  type="button"
+                  onClick={() => triggerToast(`Calculated fee of $${calculatedFee} applied to ledger account.`)}
+                  className="btn-primary text-xs py-2 px-4"
+                >
+                  Apply
+                </button>
               </div>
             </div>
           </div>

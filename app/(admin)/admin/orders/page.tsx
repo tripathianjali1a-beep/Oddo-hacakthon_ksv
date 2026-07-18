@@ -24,6 +24,12 @@ export default function AdminOrdersPage() {
   const [searchQ, setSearchQ] = useState('');
   const [processing, setProcessing] = useState(false);
   const [processed, setProcessed] = useState<string[]>([]);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const triggerToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3500);
+  };
 
   const openDrawer = (order: typeof orders[0]) => {
     setSelectedOrder(order);
@@ -46,7 +52,10 @@ export default function AdminOrdersPage() {
   const processReturn = async () => {
     setProcessing(true);
     await new Promise((r) => setTimeout(r, 1200));
-    if (selectedOrder) setProcessed((prev) => [...prev, selectedOrder.id]);
+    if (selectedOrder) {
+      setProcessed((prev) => [...prev, selectedOrder.id]);
+      triggerToast(`Order ${selectedOrder.id} return processed. Total refund of $${refund.toFixed(2)} issued.`);
+    }
     setProcessing(false);
     closeDrawer();
   };
@@ -59,6 +68,14 @@ export default function AdminOrdersPage() {
 
   return (
     <div className="p-6 md:p-8 max-w-[1440px] relative">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-navy text-white px-5 py-3.5 rounded-xl shadow-2xl border border-amber/30 flex items-center gap-3 animate-slide-up">
+          <span className="material-symbols-outlined shrink-0 text-amber" style={{ fontSize: '20px' }}>check_circle</span>
+          <span className="text-sm font-semibold">{toast}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div>
@@ -79,7 +96,10 @@ export default function AdminOrdersPage() {
           <span className="material-symbols-outlined shrink-0 absolute left-3 top-1/2 -translate-y-1/2 text-slate/50" style={{fontSize:'18px'}}>search</span>
           <input type="text" placeholder="Search orders, customers, items..." value={searchQ} onChange={(e) => setSearchQ(e.target.value)} className="input-field pl-9 text-sm" />
         </div>
-        <button className="btn-secondary text-xs py-2 px-3 flex items-center justify-center gap-1.5">
+        <button
+          onClick={() => triggerToast('Advanced order filtering modal opened.')}
+          className="btn-secondary text-xs py-2 px-3 flex items-center justify-center gap-1.5"
+        >
           <span className="material-symbols-outlined shrink-0" style={{fontSize:'16px'}}>filter_list</span>
           <span>Filter</span>
         </button>
