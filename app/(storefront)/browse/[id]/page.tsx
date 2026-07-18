@@ -48,13 +48,29 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
   const taxes = Math.round((baseTotal + attachmentCost) * 0.08);
   const total = baseTotal + attachmentCost + damageWaiver + taxes + product.deposit;
 
+  const [showConfigureModal, setShowConfigureModal] = useState(false);
+  const [selectedVariantColor, setSelectedVariantColor] = useState('Mustard Gold');
+  const [selectedAddons, setSelectedAddons] = useState<string[]>(['GPS Grading Kit', 'Safety Harness']);
+
+  const toggleAddon = (addon: string) => {
+    setSelectedAddons((prev) =>
+      prev.includes(addon) ? prev.filter((a) => a !== addon) : [...prev, addon]
+    );
+  };
+
   const handleAddToCart = () => {
+    // If product has variants, open Configure modal first as shown in Image 2
+    setShowConfigureModal(true);
+  };
+
+  const confirmAndAddToCart = () => {
+    setShowConfigureModal(false);
     setAddedToCart(true);
     setTimeout(() => { router.push('/cart'); }, 800);
   };
 
   return (
-    <div className="max-w-[1440px] mx-auto px-6 py-8">
+    <div className="max-w-[1440px] mx-auto px-6 py-8 relative">
       {/* Breadcrumb */}
       <nav className="hidden md:flex text-xs text-slate gap-1.5 items-center mb-6">
         <Link href="/browse" className="hover:text-navy">Browse</Link>
@@ -231,6 +247,118 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
           </div>
         </div>
       </div>
+
+      {/* Configure Variants Modal Dialog from Image 2 */}
+      {showConfigureModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate/20 animate-scale-up">
+            {/* Dialog Header */}
+            <div className="bg-navy text-white px-6 py-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <span className="material-symbols-outlined text-amber" style={{ fontSize: '22px' }}>tune</span>
+                <span>Configure</span>
+              </h3>
+              <button
+                onClick={() => setShowConfigureModal(false)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+                title="Close"
+              >
+                <span className="material-symbols-outlined shrink-0" style={{ fontSize: '20px' }}>close</span>
+              </button>
+            </div>
+
+            {/* Dialog Body */}
+            <div className="p-6 space-y-6">
+              {/* Row 1: Color / Variant options from Image 2 */}
+              <div className="bg-ivory/60 border border-slate/15 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-navy uppercase tracking-wider">Select Color / Finish Variant</span>
+                  <span className="badge-amber text-[10px]">{selectedVariantColor}</span>
+                </div>
+                <div className="flex items-center justify-around py-2">
+                  {[
+                    { name: 'Mustard Gold', hex: '#D97706' },
+                    { name: 'Industrial Navy', hex: '#1E293B' },
+                    { name: 'Safety Orange', hex: '#EA580C' },
+                    { name: 'Steel Gray', hex: '#64748B' },
+                  ].map((v) => (
+                    <label key={v.name} className="flex flex-col items-center gap-2 cursor-pointer group">
+                      <input
+                        type="radio"
+                        name="variantColor"
+                        checked={selectedVariantColor === v.name}
+                        onChange={() => setSelectedVariantColor(v.name)}
+                        className="sr-only"
+                      />
+                      <div
+                        style={{ backgroundColor: v.hex }}
+                        className={`w-10 h-10 rounded-full border-2 transition-all flex items-center justify-center ${
+                          selectedVariantColor === v.name
+                            ? 'ring-4 ring-amber/30 scale-110 border-white shadow-md'
+                            : 'border-slate/20 opacity-70 group-hover:opacity-100'
+                        }`}
+                      >
+                        {selectedVariantColor === v.name && (
+                          <span className="material-symbols-outlined text-white text-sm" style={{ fontSize: '18px', fontVariationSettings: "'FILL' 1" }}>check</span>
+                        )}
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate group-hover:text-navy">{v.name.split(' ')[0]}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Row 2: Add-on Checkboxes from Image 2 */}
+              <div className="bg-ivory/60 border border-slate/15 rounded-xl p-4 space-y-3">
+                <span className="text-xs font-bold text-navy uppercase tracking-wider block">Optional Add-ons & Accessories</span>
+                <div className="space-y-2.5">
+                  {[
+                    { name: 'GPS Grading Kit', price: '+$15/day' },
+                    { name: 'Safety Harness & Beacon', price: '+$8/day' },
+                    { name: 'Extended Hydraulic Warranty', price: '+$25/day' },
+                  ].map((addon) => (
+                    <label
+                      key={addon.name}
+                      onClick={() => toggleAddon(addon.name)}
+                      className="flex items-center justify-between p-2.5 rounded-lg border border-slate/15 bg-white hover:border-amber cursor-pointer transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedAddons.includes(addon.name)}
+                          onChange={() => {}}
+                          className="w-4 h-4 rounded border-slate/30 text-amber focus:ring-amber"
+                        />
+                        <span className="text-xs font-bold text-navy">{addon.name}</span>
+                      </div>
+                      <span className="text-xs font-semibold text-emerald-600">{addon.price}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Dialog Footer from Image 2 */}
+            <div className="px-6 py-4 bg-ivory border-t border-slate/15 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowConfigureModal(false)}
+                className="btn-secondary px-5 py-2.5 text-xs font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmAndAddToCart}
+                className="btn-primary px-6 py-2.5 text-xs font-bold flex items-center gap-1.5 shadow-md"
+              >
+                <span>Configure & Add to Cart</span>
+                <span className="material-symbols-outlined shrink-0" style={{ fontSize: '16px' }}>check_circle</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

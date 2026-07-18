@@ -370,42 +370,96 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            {/* Navigation Controls */}
-            <div className="flex justify-between items-center mt-8 pt-6 border-t border-slate/15">
-              <button
-                type="button"
-                onClick={goPrev}
-                disabled={currentIndex === 0}
-                className="btn-secondary py-3 px-6 text-xs disabled:opacity-30 flex items-center gap-1.5 font-bold"
-              >
-                <span className="material-symbols-outlined shrink-0" style={{ fontSize: '18px' }}>arrow_back</span>
-                <span>Back</span>
-              </button>
+            {/* Step 5: Order Success / Invoice confirmation from Image 1 */}
+            {step === ('orderSuccess' as any) && (
+              <div className="animate-fade-in py-6 space-y-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate/15">
+                  <div>
+                    <h2 className="text-2xl font-black text-red-600 tracking-tight">Thank you for your order</h2>
+                    <p className="font-mono font-bold text-navy text-sm mt-0.5">Order SO00010</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { triggerToast('Preparing invoice document for printing...'); window.print(); }}
+                    className="btn-primary py-2 px-5 text-xs flex items-center gap-1.5 shadow-md bg-navy hover:bg-amber hover:text-navy transition-all shrink-0"
+                  >
+                    <span className="material-symbols-outlined shrink-0" style={{ fontSize: '18px' }}>print</span>
+                    <span>Print Invoice</span>
+                  </button>
+                </div>
 
-              {step === 'payment' || step === 'confirm' ? (
+                {/* Green Banner from Image 1 */}
+                <div className="bg-emerald-600 text-white font-bold text-sm px-6 py-4 rounded-xl shadow-lg flex items-center gap-3">
+                  <span className="material-symbols-outlined shrink-0 text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                  <span>Your Payment has been processed.</span>
+                </div>
+
+                {/* Customer Details Box from Image 1 */}
+                <div className="bg-ivory border border-slate/20 rounded-xl p-5 space-y-3">
+                  <span className="text-[10px] font-bold text-amber uppercase tracking-wider block">Customer Lease Entity & Address</span>
+                  <div className="space-y-1 text-sm font-semibold text-navy">
+                    <p className="font-bold text-base">{contact.name}</p>
+                    <p className="text-xs text-slate">{contact.email} • {contact.phone}</p>
+                    <p className="text-xs text-slate">{delivery.address}, {delivery.city} {delivery.zip}</p>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex justify-between items-center border-t border-slate/15">
+                  <Link href="/browse" className="btn-secondary py-2.5 px-6 text-xs font-bold">
+                    ← Return to Catalog
+                  </Link>
+                  <Link href="/admin/orders" onClick={() => triggerToast('Opening backend order ledger...')} className="btn-primary py-2.5 px-6 text-xs font-bold flex items-center gap-1.5">
+                    <span>View in Backend Orders (SO00010)</span>
+                    <span className="material-symbols-outlined shrink-0" style={{ fontSize: '16px' }}>arrow_forward</span>
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {/* Navigation Controls */}
+            {step !== ('orderSuccess' as any) && (
+              <div className="flex justify-between items-center mt-8 pt-6 border-t border-slate/15">
                 <button
                   type="button"
-                  onClick={placeOrder}
-                  disabled={loading}
-                  className="btn-primary py-3.5 px-8 text-sm flex items-center justify-center gap-2 shadow-xl hover:bg-amber transition-all font-bold"
+                  onClick={goPrev}
+                  disabled={currentIndex === 0}
+                  className="btn-secondary py-3 px-6 text-xs disabled:opacity-30 flex items-center gap-1.5 font-bold"
                 >
-                  {loading ? (
-                    <><span className="material-symbols-outlined shrink-0 animate-spin" style={{ fontSize: '20px' }}>refresh</span><span>Verifying Lease & Payment...</span></>
-                  ) : (
-                    <><span className="material-symbols-outlined shrink-0" style={{ fontSize: '20px', fontVariationSettings: "'FILL' 1" }}>verified_user</span><span>Authorize & Pay Now ($2,396)</span></>
-                  )}
+                  <span className="material-symbols-outlined shrink-0" style={{ fontSize: '18px' }}>arrow_back</span>
+                  <span>Back</span>
                 </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={goNext}
-                  className="btn-primary py-3 px-8 text-xs flex items-center gap-1.5 shadow-md font-bold"
-                >
-                  <span>Continue to {step === 'contact' ? 'Delivery Method' : 'Payment Details'}</span>
-                  <span className="material-symbols-outlined shrink-0" style={{ fontSize: '18px' }}>arrow_forward</span>
-                </button>
-              )}
-            </div>
+
+                {step === 'payment' || step === 'confirm' ? (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setLoading(true);
+                      await new Promise((r) => setTimeout(r, 1200));
+                      setLoading(false);
+                      setStep('orderSuccess' as any);
+                      triggerToast('Sale order SO00010 created and invoiced in backend!');
+                    }}
+                    disabled={loading}
+                    className="btn-primary py-3.5 px-8 text-sm flex items-center justify-center gap-2 shadow-xl hover:bg-amber transition-all font-bold"
+                  >
+                    {loading ? (
+                      <><span className="material-symbols-outlined shrink-0 animate-spin" style={{ fontSize: '20px' }}>refresh</span><span>Processing Payment...</span></>
+                    ) : (
+                      <><span className="material-symbols-outlined shrink-0" style={{ fontSize: '20px', fontVariationSettings: "'FILL' 1" }}>verified_user</span><span>Authorize & Pay Now ($2,396)</span></>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={goNext}
+                    className="btn-primary py-3 px-8 text-xs flex items-center gap-1.5 shadow-md font-bold"
+                  >
+                    <span>Continue to {step === 'contact' ? 'Delivery Method' : 'Payment Details'}</span>
+                    <span className="material-symbols-outlined shrink-0" style={{ fontSize: '18px' }}>arrow_forward</span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

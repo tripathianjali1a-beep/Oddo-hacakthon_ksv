@@ -1,29 +1,45 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 
-const orders = [
-  { id: '#ORD-0942', customer: 'Sarah Jenkins', email: 'sarah.j@example.com', phone: '+1 (555) 019-2834', item: 'Canon EOS R5 Camera Kit', due: 'Today', status: 'pending', badge: 'badge-amber', badgeLabel: 'Pending Return', deposit: 500, late: true },
-  { id: '#ORD-0941', customer: 'Michael Chen', email: 'michael.c@example.com', phone: '+1 (555) 204-8812', item: 'MacBook Pro 16"', due: 'Oct 24, 2024', status: 'active', badge: 'badge-green', badgeLabel: 'Active', deposit: 800, late: false },
-  { id: '#ORD-0940', customer: 'Elena Rostova', email: 'elena.r@example.com', phone: '+1 (555) 981-0034', item: 'CAT 320 Excavator', due: 'Oct 28, 2024', status: 'active', badge: 'badge-green', badgeLabel: 'Active', deposit: 1000, late: false },
-  { id: '#ORD-0939', customer: 'James Park', email: 'james.p@example.com', phone: '+1 (555) 330-7721', item: 'Forklift 8FGU25', due: 'Oct 15, 2024', status: 'returned', badge: 'badge-slate', badgeLabel: 'Returned', deposit: 300, late: false },
-];
+interface OrderItem {
+  id: string;
+  customer: string;
+  status: 'Reserved' | 'Picked Up' | 'Late pickup' | 'Quotation' | 'Cancelled' | 'Late Return';
+  statusColor: string;
+  pickupDate: string;
+  returnDate: string;
+  total: number;
+  invoiceStatus: 'Invoiced' | 'Confirmed' | 'Quotation Sent' | 'Nothing to Invoice';
+  invoiceColor: string;
+  category: 'Today' | 'Pickup' | 'Return' | 'Late';
+  deposit: number;
+  email: string;
+  phone: string;
+  item: string;
+}
 
-const checklist = [
-  'All accessories included (charger, cables)',
-  'No visible physical damage to main unit',
-  'Device powers on and functions correctly',
-  'Storage is wiped / reset to factory',
+const initialOrders: OrderItem[] = [
+  { id: 'SO0001', customer: 'Wood Corner', status: 'Reserved', statusColor: 'bg-emerald-100 text-emerald-800 border-emerald-300', pickupDate: 'Jul 6, 6:30pm', returnDate: 'Jul 10, 6:30pm', total: 1520, invoiceStatus: 'Invoiced', invoiceColor: 'bg-blue-100 text-blue-800 border-blue-300', category: 'Today', deposit: 500, email: 'contact@woodcorner.com', phone: '+1 (555) 019-2834', item: 'CAT 320 Excavator Kit' },
+  { id: 'SO0005', customer: 'Smith', status: 'Picked Up', statusColor: 'bg-amber-100 text-amber-800 border-amber-300', pickupDate: 'Jul 10, 6:30pm', returnDate: 'Jul 13, 8:30pm', total: 1520, invoiceStatus: 'Confirmed', invoiceColor: 'bg-emerald-100 text-emerald-800 border-emerald-300', category: 'Pickup', deposit: 300, email: 'smith.j@example.com', phone: '+1 (555) 204-8812', item: 'Forklift 8FGU25' },
+  { id: 'SO0010', customer: 'John', status: 'Late pickup', statusColor: 'bg-rose-100 text-rose-800 border-rose-300', pickupDate: 'Jul 6, 6:30pm', returnDate: 'Jul 10, 6:30pm', total: 1520, invoiceStatus: 'Invoiced', invoiceColor: 'bg-blue-100 text-blue-800 border-blue-300', category: 'Return', deposit: 400, email: 'john@example.com', phone: '+1 (555) 981-0034', item: 'Commercial Generator 50kVA' },
+  { id: 'SO0012', customer: 'Alex', status: 'Quotation', statusColor: 'bg-cyan-100 text-cyan-800 border-cyan-300', pickupDate: 'Jul 8, 9:00am', returnDate: 'Jul 11, 9:00am', total: 1520, invoiceStatus: 'Quotation Sent', invoiceColor: 'bg-purple-100 text-purple-800 border-purple-300', category: 'Pickup', deposit: 250, email: 'alex@example.com', phone: '+1 (555) 330-7721', item: 'Cinema Camera Package' },
+  { id: 'SO0020', customer: 'Sam', status: 'Cancelled', statusColor: 'bg-slate-200 text-slate-700 border-slate-300', pickupDate: 'Jul 3, 9:00pm', returnDate: 'Jul 11, 9:00am', total: 1520, invoiceStatus: 'Nothing to Invoice', invoiceColor: 'bg-gray-100 text-gray-700 border-gray-300', category: 'Late', deposit: 150, email: 'sam@example.com', phone: '+1 (555) 819-2045', item: 'Scaffolding Lift 40ft' },
+  { id: 'SO0013', customer: 'Smith', status: 'Late Return', statusColor: 'bg-rose-100 text-rose-800 border-rose-300', pickupDate: 'Jul 4, 10:00am', returnDate: 'Jul 9, 5:00pm', total: 1450, invoiceStatus: 'Invoiced', invoiceColor: 'bg-blue-100 text-blue-800 border-blue-300', category: 'Today', deposit: 500, email: 'smith.j@example.com', phone: '+1 (555) 204-8812', item: 'CAT 320 Excavator Kit' },
+  { id: 'SO0008', customer: 'Prater', status: 'Reserved', statusColor: 'bg-emerald-100 text-emerald-800 border-emerald-300', pickupDate: 'Jul 11, 8:00am', returnDate: 'Jul 15, 6:00pm', total: 50, invoiceStatus: 'Quotation Sent', invoiceColor: 'bg-purple-100 text-purple-800 border-purple-300', category: 'Return', deposit: 100, email: 'prater@example.com', phone: '+1 (555) 440-1029', item: 'Power Drill Set' },
+  { id: 'SO0011', customer: 'Mark wood', status: 'Reserved', statusColor: 'bg-emerald-100 text-emerald-800 border-emerald-300', pickupDate: 'Jul 12, 9:00am', returnDate: 'Jul 16, 5:00pm', total: 1450, invoiceStatus: 'Confirmed', invoiceColor: 'bg-emerald-100 text-emerald-800 border-emerald-300', category: 'Return', deposit: 450, email: 'mark@wood.com', phone: '+1 (555) 902-1182', item: 'Scaffolding Lift 40ft' },
 ];
 
 export default function AdminOrdersPage() {
-  const [selectedOrder, setSelectedOrder] = useState<typeof orders[0] | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [orders, setOrders] = useState<OrderItem[]>(initialOrders);
+  // Default view is 'list' as specified in Image 3 ("List view by default")
   const [view, setView] = useState<'list' | 'kanban'>('list');
-  const [checkedItems, setCheckedItems] = useState<boolean[]>(checklist.map(() => false));
-  const [lateFee, setLateFee] = useState('50.00');
   const [searchQ, setSearchQ] = useState('');
-  const [processing, setProcessing] = useState(false);
-  const [processed, setProcessed] = useState<string[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState<'All' | 'Today' | 'Pickup' | 'Return' | 'Late'>('All');
+  const [last7Days, setLast7Days] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [lateFee, setLateFee] = useState('50.00');
   const [toast, setToast] = useState<string | null>(null);
 
   const triggerToast = (msg: string) => {
@@ -31,43 +47,26 @@ export default function AdminOrdersPage() {
     setTimeout(() => setToast(null), 3500);
   };
 
-  const openDrawer = (order: typeof orders[0]) => {
+  const filteredOrders = orders.filter((o) => {
+    const matchesSearch = o.customer.toLowerCase().includes(searchQ.toLowerCase()) || o.id.toLowerCase().includes(searchQ.toLowerCase()) || o.item.toLowerCase().includes(searchQ.toLowerCase());
+    const matchesCategory = selectedFilter === 'All' || o.category === selectedFilter;
+    return matchesSearch && matchesCategory;
+  });
+
+  const counts = {
+    Today: orders.filter((o) => o.category === 'Today').length,
+    Pickup: orders.filter((o) => o.category === 'Pickup').length,
+    Return: orders.filter((o) => o.category === 'Return').length,
+    Late: orders.filter((o) => o.category === 'Late').length,
+  };
+
+  const openDrawer = (order: OrderItem) => {
     setSelectedOrder(order);
     setDrawerOpen(true);
-    setCheckedItems(checklist.map(() => false));
-    setLateFee('50.00');
   };
-
-  const closeDrawer = () => {
-    setDrawerOpen(false);
-    setTimeout(() => setSelectedOrder(null), 300);
-  };
-
-  const toggleCheck = (i: number) => {
-    setCheckedItems((prev) => { const next = [...prev]; next[i] = !next[i]; return next; });
-  };
-
-  const refund = Math.max(0, (selectedOrder?.deposit || 0) - (parseFloat(lateFee) || 0));
-
-  const processReturn = async () => {
-    setProcessing(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    if (selectedOrder) {
-      setProcessed((prev) => [...prev, selectedOrder.id]);
-      triggerToast(`Order ${selectedOrder.id} return processed. Total refund of $${refund.toFixed(2)} issued.`);
-    }
-    setProcessing(false);
-    closeDrawer();
-  };
-
-  const filtered = orders.filter((o) =>
-    o.customer.toLowerCase().includes(searchQ.toLowerCase()) ||
-    o.item.toLowerCase().includes(searchQ.toLowerCase()) ||
-    o.id.toLowerCase().includes(searchQ.toLowerCase())
-  );
 
   return (
-    <div className="p-6 md:p-8 max-w-[1440px] relative">
+    <div className="p-6 md:p-8 max-w-[1440px] mx-auto relative">
       {/* Toast Notification */}
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 bg-navy text-white px-5 py-3.5 rounded-xl shadow-2xl border border-amber/30 flex items-center gap-3 animate-slide-up">
@@ -76,117 +75,236 @@ export default function AdminOrdersPage() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-        <div>
-          <h1 className="text-h1 text-navy">Order Management</h1>
-          <p className="text-slate text-sm mt-1">Review and process active rentals and returns.</p>
+      {/* Top Bar with View Switcher and Actions from Image 3 & Image 5 */}
+      <div className="card p-5 mb-6 shadow-md border-slate/15">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Left Action Buttons */}
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-black text-navy flex items-center gap-2">
+              <span>Rental Order</span>
+              <button
+                onClick={() => triggerToast('Rental order settings & gear configuration opened.')}
+                className="text-slate hover:text-navy p-1 rounded transition-colors"
+                title="Configuration"
+              >
+                <span className="material-symbols-outlined shrink-0" style={{ fontSize: '20px' }}>settings</span>
+              </button>
+            </h1>
+            <button
+              onClick={() => triggerToast('Opening New Rental Order dialog box...')}
+              className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-1.5 rounded-lg text-xs shadow-sm transition-all flex items-center gap-1"
+            >
+              <span className="material-symbols-outlined shrink-0" style={{ fontSize: '16px' }}>add</span>
+              <span>New</span>
+            </button>
+          </div>
+
+          {/* Search Box */}
+          <div className="flex-1 max-w-md relative">
+            <span className="material-symbols-outlined shrink-0 absolute left-3 top-1/2 -translate-y-1/2 text-slate/40" style={{ fontSize: '18px' }}>search</span>
+            <input
+              type="text"
+              placeholder="Search by order reference, customer name, gear..."
+              value={searchQ}
+              onChange={(e) => setSearchQ(e.target.value)}
+              className="w-full pl-9 pr-4 py-1.5 text-xs bg-ivory border border-slate/20 rounded-lg text-navy focus:border-purple-500 outline-none font-medium"
+            />
+          </div>
+
+          {/* Right View Switcher & Profile Toggle from Image 3 */}
+          <div className="flex items-center gap-4 justify-between md:justify-end">
+            <div className="flex items-center gap-1 bg-ivory p-1 rounded-lg border border-slate/20">
+              <span className="text-[10px] font-bold text-slate px-2 hidden sm:inline">View Switcher:</span>
+              <button
+                onClick={() => { setView('list'); triggerToast('Switched to List View (default)'); }}
+                title="List View"
+                className={`p-1.5 rounded flex items-center justify-center transition-all ${view === 'list' ? 'bg-navy text-white shadow-sm' : 'text-slate hover:text-navy'}`}
+              >
+                <span className="material-symbols-outlined shrink-0" style={{ fontSize: '18px' }}>view_list</span>
+              </button>
+              <button
+                onClick={() => { setView('kanban'); triggerToast('Switched to Kanban View'); }}
+                title="Kanban View"
+                className={`p-1.5 rounded flex items-center justify-center transition-all ${view === 'kanban' ? 'bg-navy text-white shadow-sm' : 'text-slate hover:text-navy'}`}
+              >
+                <span className="material-symbols-outlined shrink-0" style={{ fontSize: '18px' }}>grid_view</span>
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-2 mt-3 sm:mt-0">
-          <div className="flex bg-surface-high p-1 rounded-lg border border-slate/10">
-            <button onClick={() => setView('list')} className={`px-4 py-1.5 rounded text-xs font-semibold transition-all ${view === 'list' ? 'bg-white shadow-sm text-navy' : 'text-slate hover:text-navy'}`}>List</button>
-            <button onClick={() => setView('kanban')} className={`px-4 py-1.5 rounded text-xs font-semibold transition-all ${view === 'kanban' ? 'bg-white shadow-sm text-navy' : 'text-slate hover:text-navy'}`}>Kanban</button>
+
+        {/* Filter Pills and KPI Bar from Image 3 */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mt-5 pt-4 border-t border-slate/10">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setSelectedFilter(selectedFilter === 'Today' ? 'All' : 'Today')}
+              className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all flex items-center gap-1.5 ${selectedFilter === 'Today' ? 'bg-amber text-navy border-amber shadow-sm scale-105' : 'bg-amber/15 text-amber-900 border-amber/30 hover:bg-amber/25'}`}
+            >
+              <span>{counts.Today}</span>
+              <span>Today</span>
+            </button>
+            <button
+              onClick={() => setSelectedFilter(selectedFilter === 'Pickup' ? 'All' : 'Pickup')}
+              className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all flex items-center gap-1.5 ${selectedFilter === 'Pickup' ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm scale-105' : 'bg-indigo-100 text-indigo-900 border-indigo-200 hover:bg-indigo-200'}`}
+            >
+              <span>{counts.Pickup}</span>
+              <span>Pickup</span>
+            </button>
+            <button
+              onClick={() => setSelectedFilter(selectedFilter === 'Return' ? 'All' : 'Return')}
+              className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all flex items-center gap-1.5 ${selectedFilter === 'Return' ? 'bg-purple-600 text-white border-purple-600 shadow-sm scale-105' : 'bg-purple-100 text-purple-900 border-purple-200 hover:bg-purple-200'}`}
+            >
+              <span>{counts.Return}</span>
+              <span>Return</span>
+            </button>
+            <button
+              onClick={() => setSelectedFilter(selectedFilter === 'Late' ? 'All' : 'Late')}
+              className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all flex items-center gap-1.5 ${selectedFilter === 'Late' ? 'bg-rose-600 text-white border-rose-600 shadow-sm scale-105' : 'bg-rose-100 text-rose-900 border-rose-200 hover:bg-rose-200'}`}
+            >
+              <span>{counts.Late}</span>
+              <span>Late</span>
+            </button>
+            {selectedFilter !== 'All' && (
+              <button onClick={() => setSelectedFilter('All')} className="text-xs font-semibold text-slate underline ml-2 hover:text-navy">
+                Reset Filter
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-4 text-xs font-bold bg-ivory px-4 py-2 rounded-xl border border-slate/15">
+            <label className="flex items-center gap-2 cursor-pointer border-r border-slate/20 pr-3">
+              <input type="checkbox" checked={last7Days} onChange={(e) => setLast7Days(e.target.checked)} className="rounded text-purple-600 focus:ring-purple-500" />
+              <span className="text-navy">Last 7 Days</span>
+            </label>
+            <div className="flex items-center gap-3">
+              <span className="text-slate">Sales: <strong className="text-emerald-600 font-currency">$10,450</strong></span>
+              <span className="text-slate">Late Fees: <strong className="text-rose-600 font-currency">$235</strong></span>
+              <span className="text-slate">Deposits: <strong className="text-navy font-currency">$710</strong></span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Search */}
-      <div className="card p-4 mb-5 flex items-center gap-3">
-        <div className="relative flex-1">
-          <span className="material-symbols-outlined shrink-0 absolute left-3 top-1/2 -translate-y-1/2 text-slate/50" style={{fontSize:'18px'}}>search</span>
-          <input type="text" placeholder="Search orders, customers, items..." value={searchQ} onChange={(e) => setSearchQ(e.target.value)} className="input-field pl-9 text-sm" />
-        </div>
-        <button
-          onClick={() => triggerToast('Advanced order filtering modal opened.')}
-          className="btn-secondary text-xs py-2 px-3 flex items-center justify-center gap-1.5"
-        >
-          <span className="material-symbols-outlined shrink-0" style={{fontSize:'16px'}}>filter_list</span>
-          <span>Filter</span>
-        </button>
-      </div>
-
-      {/* List View */}
+      {/* List View Table from Image 3 ("List view by default") */}
       {view === 'list' && (
-        <div className="card rounded-xl overflow-hidden">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-ivory border-b border-slate/10">
-                <th className="table-header">Order ID</th>
-                <th className="table-header">Customer</th>
-                <th className="table-header hidden md:table-cell">Item</th>
-                <th className="table-header hidden lg:table-cell">Due Date</th>
-                <th className="table-header">Status</th>
-                <th className="table-header text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((order) => (
-                <tr
-                  key={order.id}
-                  className="table-row cursor-pointer"
-                  onClick={() => openDrawer(order)}
-                >
-                  <td className="table-cell font-currency font-semibold text-navy">{order.id}</td>
-                  <td className="table-cell">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-navy-container text-white text-xs flex items-center justify-center font-semibold flex-shrink-0">
-                        {order.customer[0]}
-                      </div>
-                      <span className="font-medium text-navy text-sm">{order.customer}</span>
-                    </div>
-                  </td>
-                  <td className="table-cell hidden md:table-cell text-slate">{order.item}</td>
-                  <td className={`table-cell hidden lg:table-cell font-medium ${order.due === 'Today' ? 'text-red-600' : 'text-slate'}`}>{order.due}</td>
-                  <td className="table-cell">
-                    {processed.includes(order.id)
-                      ? <span className="badge-green">Processed</span>
-                      : <span className={order.badge}>{order.badgeLabel}</span>
-                    }
-                  </td>
-                  <td className="table-cell text-right">
-                    <button className={`transition-colors flex items-center justify-center ml-auto ${order.status === 'pending' ? 'text-amber hover:text-navy' : 'text-slate hover:text-navy'}`}>
-                      <span className="material-symbols-outlined shrink-0" style={{fontSize:'20px'}}>chevron_right</span>
-                    </button>
-                  </td>
+        <div className="space-y-4 animate-fade-in">
+          <div className="card rounded-xl overflow-x-auto border-slate/15 shadow-md">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-navy text-white text-[11px] uppercase tracking-wider">
+                  <th className="p-3.5 w-10 text-center">
+                    <input type="checkbox" className="rounded border-slate/50" />
+                  </th>
+                  <th className="p-3.5 font-bold">Order Reference</th>
+                  <th className="p-3.5 font-bold">Customer</th>
+                  <th className="p-3.5 font-bold">Status</th>
+                  <th className="p-3.5 font-bold">Pickup Date</th>
+                  <th className="p-3.5 font-bold">Return Date</th>
+                  <th className="p-3.5 font-bold">Total</th>
+                  <th className="p-3.5 font-bold">Invoice Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          {filtered.length === 0 && (
-            <div className="p-12 text-center text-slate text-sm">No orders found.</div>
-          )}
+              </thead>
+              <tbody className="divide-y divide-slate/10 text-xs font-medium text-navy bg-white">
+                {filteredOrders.map((o) => (
+                  <tr key={o.id} onClick={() => openDrawer(o)} className="hover:bg-amber/5 cursor-pointer transition-colors">
+                    <td className="p-3.5 text-center" onClick={(e) => e.stopPropagation()}>
+                      <input type="checkbox" className="rounded border-slate/30 text-purple-600" />
+                    </td>
+                    <td className="p-3.5 font-mono font-bold text-purple-700">{o.id}</td>
+                    <td className="p-3.5 font-bold text-navy">{o.customer}</td>
+                    <td className="p-3.5">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border uppercase tracking-wide ${o.statusColor}`}>
+                        {o.status}
+                      </span>
+                    </td>
+                    <td className="p-3.5 text-slate">{o.pickupDate}</td>
+                    <td className="p-3.5 text-slate">{o.returnDate}</td>
+                    <td className="p-3.5 font-extrabold font-currency">${o.total.toLocaleString()}</td>
+                    <td className="p-3.5">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border uppercase tracking-wide ${o.invoiceColor}`}>
+                        {o.invoiceStatus}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Legend Box from Image 3 Bottom */}
+          <div className="bg-white border border-slate/20 rounded-xl p-4 shadow-sm flex flex-wrap items-center gap-6 text-xs font-semibold">
+            <span className="text-slate uppercase text-[10px] tracking-wider font-bold">Invoice Status Legend:</span>
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-2.5 bg-purple-500 rounded"></span>
+              <span className="text-navy">Quotation Sent</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-2.5 bg-emerald-500 rounded"></span>
+              <span className="text-navy">Sale order Confirmed</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-2.5 bg-blue-500 rounded"></span>
+              <span className="text-navy">Invoiced</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-2.5 bg-gray-400 rounded"></span>
+              <span className="text-navy">Nothing to Invoice</span>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Kanban View */}
+      {/* Kanban View from Image 5 */}
       {view === 'kanban' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {['active', 'pending', 'returned'].map((status) => {
-            const statusLabels: Record<string, string> = { active: 'Active Rentals', pending: 'Pending Return', returned: 'Returned' };
-            const statusBadge: Record<string, string> = { active: 'badge-green', pending: 'badge-amber', returned: 'badge-slate' };
-            const col = filtered.filter((o) => processed.includes(o.id) ? false : o.status === status);
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 animate-fade-in">
+          {(['Today', 'Pickup', 'Return', 'Late'] as const).map((col) => {
+            const colOrders = filteredOrders.filter((o) => o.category === col);
+            const colColors = {
+              Today: 'border-amber-400 bg-amber-50/50 text-amber-900',
+              Pickup: 'border-indigo-400 bg-indigo-50/50 text-indigo-900',
+              Return: 'border-purple-400 bg-purple-50/50 text-purple-900',
+              Late: 'border-rose-400 bg-rose-50/50 text-rose-900',
+            }[col];
+
             return (
-              <div key={status}>
-                <div className="flex items-center gap-2 mb-3">
-                  <h3 className="font-semibold text-navy text-sm">{statusLabels[status]}</h3>
-                  <span className={`${statusBadge[status]} text-[10px]`}>{col.length}</span>
+              <div key={col} className="bg-surface-high border border-slate/15 rounded-2xl p-4 flex flex-col gap-3 min-h-[480px]">
+                <div className={`flex justify-between items-center px-3 py-2 rounded-xl border-t-4 font-bold text-xs uppercase tracking-wide ${colColors}`}>
+                  <span>{col} Orders</span>
+                  <span className="px-2 py-0.5 bg-white/80 rounded-full text-[11px] shadow-sm">{colOrders.length}</span>
                 </div>
-                <div className="space-y-3">
-                  {col.map((order) => (
-                    <div key={order.id} onClick={() => openDrawer(order)} className="card p-4 cursor-pointer hover:border-amber transition-all card-hover">
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="text-xs font-currency font-semibold text-slate">{order.id}</span>
-                        {order.due === 'Today' && <span className="badge-red text-[10px]">Due Today</span>}
+
+                <div className="space-y-3 flex-1 overflow-y-auto pr-1">
+                  {colOrders.map((o) => (
+                    <div
+                      key={o.id}
+                      onClick={() => openDrawer(o)}
+                      className="bg-white border border-slate/20 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-purple-500 transition-all cursor-pointer flex flex-col gap-2.5"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-bold text-navy text-sm">{o.customer}</p>
+                          <p className="font-mono text-xs text-purple-700 font-semibold">{o.id}</p>
+                        </div>
+                        <span className="font-bold text-navy font-currency text-sm">${o.total}</span>
                       </div>
-                      <p className="font-semibold text-navy text-sm">{order.customer}</p>
-                      <p className="text-slate text-xs mt-0.5 line-clamp-1">{order.item}</p>
-                      <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate/10">
-                        <span className="text-xs text-slate">{order.due}</span>
-                        <span className="material-symbols-outlined shrink-0 text-slate" style={{fontSize:'16px'}}>open_in_new</span>
+
+                      <p className="text-[11px] text-slate truncate">{o.item}</p>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-slate/10 text-[10px]">
+                        <span className={`px-2 py-0.5 rounded-md font-bold uppercase tracking-wider ${o.statusColor}`}>
+                          {o.status}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-md font-bold uppercase tracking-wider ${o.invoiceColor}`}>
+                          {o.invoiceStatus}
+                        </span>
                       </div>
                     </div>
                   ))}
-                  {col.length === 0 && <div className="card p-6 text-center text-slate text-xs">No orders</div>}
+                  {colOrders.length === 0 && (
+                    <div className="h-32 flex items-center justify-center border-2 border-dashed border-slate/20 rounded-xl text-slate text-xs font-semibold">
+                      No orders in {col}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -194,135 +312,62 @@ export default function AdminOrdersPage() {
         </div>
       )}
 
-      {/* Drawer Overlay */}
-      <div
-        className={`fixed inset-0 bg-black/30 z-40 transition-opacity duration-300 ${drawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-        onClick={closeDrawer}
-      />
-
-      {/* Order Detail Drawer */}
-      <aside className={`drawer ${drawerOpen ? 'open' : ''}`}>
-        {selectedOrder && (
-          <>
-            <div className="p-5 border-b border-slate/10 flex justify-between items-start sticky top-0 bg-white z-10">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h2 className="text-h3 text-navy">Order {selectedOrder.id}</h2>
-                  {processed.includes(selectedOrder.id)
-                    ? <span className="badge-green">Processed</span>
-                    : <span className={selectedOrder.badge}>{selectedOrder.badgeLabel}</span>
-                  }
+      {/* Order Detail Side Drawer */}
+      {drawerOpen && selectedOrder && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white w-full max-w-lg h-full overflow-y-auto shadow-2xl p-6 flex flex-col justify-between animate-slide-left">
+            <div>
+              <div className="flex justify-between items-center pb-4 border-b border-slate/15">
+                <div>
+                  <h3 className="text-lg font-bold text-navy">Order Details — {selectedOrder.id}</h3>
+                  <p className="text-xs text-slate">{selectedOrder.customer} ({selectedOrder.email})</p>
                 </div>
-                <p className="text-slate text-xs">Rental Period: Oct 20 – {selectedOrder.due}</p>
+                <button onClick={() => setDrawerOpen(false)} className="w-8 h-8 rounded-full bg-slate/10 hover:bg-slate/20 flex items-center justify-center">
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>close</span>
+                </button>
               </div>
-              <button onClick={closeDrawer} className="p-1.5 rounded-full hover:bg-surface-high transition-colors text-slate flex items-center justify-center">
-                <span className="material-symbols-outlined shrink-0" style={{fontSize:'20px'}}>close</span>
-              </button>
+
+              <div className="py-6 space-y-4 text-xs font-medium text-navy">
+                <div className="bg-ivory p-4 rounded-xl border border-slate/15 space-y-2">
+                  <div className="flex justify-between"><span className="text-slate">Equipment Item:</span><span className="font-bold">{selectedOrder.item}</span></div>
+                  <div className="flex justify-between"><span className="text-slate">Pickup Date:</span><span>{selectedOrder.pickupDate}</span></div>
+                  <div className="flex justify-between"><span className="text-slate">Return Due:</span><span>{selectedOrder.returnDate}</span></div>
+                  <div className="flex justify-between"><span className="text-slate">Total Amount:</span><span className="font-bold font-currency">${selectedOrder.total}</span></div>
+                  <div className="flex justify-between"><span className="text-slate">Security Deposit:</span><span className="font-bold text-amber">${selectedOrder.deposit}</span></div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-slate uppercase">Deduct Late Fee / Damage Assessment ($)</label>
+                  <input
+                    type="number"
+                    value={lateFee}
+                    onChange={(e) => setLateFee(e.target.value)}
+                    className="input-field text-sm font-bold"
+                  />
+                  <p className="text-[11px] text-slate">Deducted from ${selectedOrder.deposit} deposit during inspection.</p>
+                </div>
+              </div>
             </div>
 
-            <div className="flex-1 p-5 space-y-5">
-              {/* Customer */}
-              <section>
-                <h3 className="text-[10px] font-semibold text-slate uppercase tracking-widest mb-3">Customer Details</h3>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-navy-container text-white text-base font-bold flex items-center justify-center flex-shrink-0">
-                    {selectedOrder.customer[0]}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-navy">{selectedOrder.customer}</p>
-                    <p className="text-slate text-xs">{selectedOrder.email} • {selectedOrder.phone}</p>
-                  </div>
-                </div>
-              </section>
-
-              {/* Item */}
-              <section>
-                <h3 className="text-[10px] font-semibold text-slate uppercase tracking-widest mb-2">Rental Item</h3>
-                <div className="bg-ivory rounded-lg border border-slate/10 p-3 flex items-center gap-3">
-                  <span className="material-symbols-outlined shrink-0 text-slate" style={{fontSize:'20px'}}>inventory_2</span>
-                  <p className="text-navy font-medium text-sm">{selectedOrder.item}</p>
-                </div>
-              </section>
-
-              {/* Return Process */}
-              <section className="border border-slate/10 rounded-xl overflow-hidden">
-                <div className="bg-ivory px-4 py-3 border-b border-slate/10 flex items-center gap-2">
-                  <span className="material-symbols-outlined shrink-0 text-navy" style={{fontSize:'18px'}}>fact_check</span>
-                  <h3 className="text-sm font-semibold text-navy">Return Process</h3>
-                </div>
-                <div className="p-4 space-y-4">
-                  {/* Checklist */}
-                  <div>
-                    <p className="text-[10px] font-semibold text-slate uppercase tracking-wide mb-2">Condition Checklist</p>
-                    <div className="space-y-2.5">
-                      {checklist.map((item, i) => (
-                        <label key={i} className="flex items-start gap-2.5 cursor-pointer group">
-                          <input
-                            type="checkbox"
-                            checked={checkedItems[i]}
-                            onChange={() => toggleCheck(i)}
-                            className="mt-0.5 w-4 h-4 rounded border-slate/30 text-navy focus:ring-amber"
-                          />
-                          <span className={`text-sm transition-colors ${checkedItems[i] ? 'text-navy line-through opacity-60' : 'text-on-surface group-hover:text-amber'}`}>{item}</span>
-                        </label>
-                      ))}
-                    </div>
-                    <div className="mt-2 text-xs text-slate">{checkedItems.filter(Boolean).length} of {checklist.length} checked</div>
-                  </div>
-
-                  {/* Deposit & Late Fee */}
-                  <div className="border-t border-slate/10 pt-4">
-                    <div className="flex justify-between items-center mb-3">
-                      <span className="text-[10px] font-semibold text-slate uppercase tracking-wide">Security Deposit Held</span>
-                      <span className="font-currency font-semibold text-navy">${selectedOrder.deposit.toLocaleString()}.00</span>
-                    </div>
-                    <div className="flex justify-between items-center mb-3">
-                      <label className="text-[10px] font-semibold text-slate uppercase tracking-wide flex items-center gap-1" htmlFor="late-fee-input">
-                        Late/Damage Fee
-                        {selectedOrder.late && <span className="material-symbols-outlined shrink-0 text-amber" style={{fontSize:'14px'}}>warning</span>}
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate font-mono text-sm">$</span>
-                        <input
-                          id="late-fee-input"
-                          type="number"
-                          value={lateFee}
-                          onChange={(e) => setLateFee(e.target.value)}
-                          className="input-field w-28 pl-6 pr-2 py-1.5 text-right font-currency text-sm"
-                          min="0"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Refund ledger card */}
-                    <div className="ledger-card flex justify-between items-center">
-                      <span className="font-semibold text-navy text-sm">Total Refund</span>
-                      <span className="font-currency font-bold text-navy text-h3">${refund.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            </div>
-
-            {/* Drawer Footer */}
-            <div className="p-5 border-t border-slate/10 sticky bottom-0 bg-white flex gap-3">
-              <button onClick={closeDrawer} className="btn-secondary flex-1 py-2.5 flex items-center justify-center"><span>Cancel</span></button>
+            <div className="pt-4 border-t border-slate/15 flex gap-3">
               <button
-                onClick={processReturn}
-                disabled={processing || processed.includes(selectedOrder.id)}
-                className="btn-primary flex-1 py-2.5 flex items-center justify-center gap-1.5"
+                type="button"
+                onClick={() => { triggerToast(`Order ${selectedOrder.id} confirmed and marked as Paid/Invoiced.`); setDrawerOpen(false); }}
+                className="btn-primary flex-1 py-3 text-xs font-bold"
               >
-                {processing
-                  ? <><span className="material-symbols-outlined shrink-0 animate-spin" style={{fontSize:'18px'}}>refresh</span><span>Processing...</span></>
-                  : processed.includes(selectedOrder.id)
-                  ? <span>Processed ✓</span>
-                  : <span>Process Return</span>
-                }
+                Mark Invoiced & Process Return
+              </button>
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(false)}
+                className="btn-secondary px-5 py-3 text-xs font-bold"
+              >
+                Close
               </button>
             </div>
-          </>
-        )}
-      </aside>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
