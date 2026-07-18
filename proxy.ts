@@ -7,7 +7,8 @@ const protectedCustomerRoutes = ['/account', '/orders', '/addresses', '/checkout
 // Routes that require admin role
 const adminRoutes = ['/admin'];
 
-export function middleware(request: NextRequest) {
+// Next.js 16+ uses "proxy" named export (previously "middleware")
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Read auth from cookies (we store a lightweight auth cookie on login)
