@@ -30,6 +30,9 @@ const vendorBreakdown = [
 export default function AdminReportsPage() {
   const [roleMode, setRoleMode] = useState<'admin' | 'vendor'>('admin');
   const [range, setRange] = useState('q3');
+  const [chartType, setChartType] = useState<'bar' | 'pie' | 'line'>('bar');
+  const [criteria, setCriteria] = useState('Revenue by Category');
+  const [showGearMenu, setShowGearMenu] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   const triggerToast = (msg: string) => {
@@ -50,25 +53,19 @@ export default function AdminReportsPage() {
         </div>
       )}
 
-      {/* Header with Role segregation, Print to PDF, and Export CSV/Excel from Image 5 */}
-      <div className="card p-6 border-slate/15 shadow-md flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-        <div>
+      {/* Header with Role segregation and exact Reports [⚙️] bar from Image 2 top */}
+      <div className="card p-6 border-slate/15 shadow-md space-y-5">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-slate/15">
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-black text-navy flex items-center gap-2">
               <span className="material-symbols-outlined text-amber" style={{ fontSize: '26px' }}>analytics</span>
-              <span>Financial Reporting & Analytics Ledger</span>
+              <span>Reporting</span>
             </h1>
             <span className={`px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider border ${roleMode === 'admin' ? 'bg-navy text-white border-navy' : 'bg-purple-100 text-purple-800 border-purple-300'}`}>
               {roleMode === 'admin' ? 'Platform Admin Scope' : 'Individual Vendor Scope'}
             </span>
           </div>
-          <p className="text-xs text-slate mt-1">
-            Reporting for admin and individual vendors should be different. Review real-time revenue and utilization metrics below.
-          </p>
-        </div>
 
-        {/* Role Toggle & Export Controls from Image 5 */}
-        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
           {/* Role Switcher */}
           <div className="flex items-center bg-ivory p-1 rounded-xl border border-slate/20">
             <button
@@ -84,36 +81,158 @@ export default function AdminReportsPage() {
               Vendor Portal
             </button>
           </div>
+        </div>
 
-          <select
-            value={range}
-            onChange={(e) => setRange(e.target.value)}
-            className="input-field text-xs py-2 px-3 bg-white w-36 font-semibold"
-          >
-            <option value="q3">Q3 2024 (Jul - Sep)</option>
-            <option value="q2">Q2 2024 (Apr - Jun)</option>
-            <option value="ytd">Year to Date (2024)</option>
-          </select>
+        {/* Second Action Bar from Image 2 top: Reports [⚙️], Criteria for Analysis, Insert in chart, Chart Switcher */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="flex items-center gap-2">
+                <span className="text-base font-black text-navy">Reports</span>
+                <button
+                  type="button"
+                  onClick={() => setShowGearMenu(!showGearMenu)}
+                  className="w-8 h-8 rounded-lg bg-ivory hover:bg-slate/10 border border-slate/20 flex items-center justify-center text-navy transition-colors"
+                  title="Reporting Actions Menu"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>settings</span>
+                </button>
+              </div>
 
-          {/* Print -> PDF from Image 5 */}
-          <button
-            onClick={() => { triggerToast('Generating formatted PDF report document...'); window.print(); }}
-            className="btn-secondary py-2 px-4 text-xs font-bold flex items-center gap-1.5 shadow-sm bg-white"
-            title="Print report or save as PDF"
-          >
-            <span className="material-symbols-outlined shrink-0 text-red-600" style={{ fontSize: '18px' }}>print</span>
-            <span>Print → PDF</span>
-          </button>
+              {/* Gear Dropdown Menu from Image 2 top (Print -> PDF, Import, Export -> Excel & CSV) */}
+              {showGearMenu && (
+                <div className="absolute left-0 mt-2 w-52 bg-white rounded-xl shadow-2xl border border-slate/20 py-2 z-30 animate-fade-in text-xs font-bold text-navy">
+                  <button
+                    type="button"
+                    onClick={() => { setShowGearMenu(false); triggerToast('Generating formatted PDF report document...'); window.print(); }}
+                    className="w-full px-4 py-2.5 text-left hover:bg-amber/10 flex items-center justify-between"
+                  >
+                    <span>Print → PDF</span>
+                    <span className="material-symbols-outlined text-red-600" style={{ fontSize: '18px' }}>print</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowGearMenu(false); triggerToast('Opening file dialog to Import reporting ledger data...'); }}
+                    className="w-full px-4 py-2.5 text-left hover:bg-amber/10 flex items-center justify-between"
+                  >
+                    <span>Import</span>
+                    <span className="material-symbols-outlined text-purple-600" style={{ fontSize: '18px' }}>file_upload</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowGearMenu(false); triggerToast(`Exporting ${roleMode === 'admin' ? 'Platform' : 'Vendor'} dataset as Excel (.xlsx) & CSV...`); }}
+                    className="w-full px-4 py-2.5 text-left hover:bg-amber/10 flex items-center justify-between"
+                  >
+                    <span>Export → Excel & CSV</span>
+                    <span className="material-symbols-outlined text-emerald-600" style={{ fontSize: '18px' }}>table_view</span>
+                  </button>
+                </div>
+              )}
+            </div>
 
-          {/* Export -> Excel & CSV from Image 5 */}
-          <button
-            onClick={() => triggerToast(`Exporting ${roleMode === 'admin' ? 'Platform' : 'Vendor'} report dataset as Excel (.xlsx) & CSV...`)}
-            className="btn-primary py-2 px-4 text-xs font-bold flex items-center gap-1.5 shadow-md bg-emerald-700 hover:bg-emerald-800 text-white"
-            title="Download structured spreadsheet data"
-          >
-            <span className="material-symbols-outlined shrink-0" style={{ fontSize: '18px' }}>table_view</span>
-            <span>Export → Excel & CSV</span>
-          </button>
+            {/* Criteria for Analysis selector from Image 2 top */}
+            <div className="flex items-center gap-2">
+              <select
+                value={criteria}
+                onChange={(e) => setCriteria(e.target.value)}
+                className="input-field text-xs py-1.5 px-3 bg-purple-100 text-purple-900 border-purple-300 font-bold rounded-lg w-auto"
+              >
+                <option>Criteria for Analysis ♥</option>
+                <option>Revenue by Asset Category</option>
+                <option>Utilization Rate by Duration</option>
+                <option>Monthly Order Volume Growth</option>
+              </select>
+
+              <button
+                type="button"
+                onClick={() => triggerToast(`Appended '${criteria}' metric directly into dynamic report chart!`)}
+                className="btn-secondary py-1.5 px-3 text-xs font-bold bg-white"
+              >
+                Insert in chart
+              </button>
+            </div>
+          </div>
+
+          {/* Chart Type Switcher from Image 2 top: [ Bar ] [ Pie ] [ Line ] */}
+          <div className="flex items-center gap-1 bg-ivory p-1 rounded-xl border border-slate/20">
+            <button
+              onClick={() => { setChartType('bar'); triggerToast('Switched to Bar Chart visualization'); }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all ${chartType === 'bar' ? 'bg-navy text-white shadow-sm' : 'text-slate hover:text-navy'}`}
+              title="Bar Chart"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>bar_chart</span>
+              <span>Bar</span>
+            </button>
+            <button
+              onClick={() => { setChartType('pie'); triggerToast('Switched to Pie Chart visualization'); }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all ${chartType === 'pie' ? 'bg-navy text-white shadow-sm' : 'text-slate hover:text-navy'}`}
+              title="Pie Chart"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>pie_chart</span>
+              <span>Pie</span>
+            </button>
+            <button
+              onClick={() => { setChartType('line'); triggerToast('Switched to Line Graph visualization'); }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all ${chartType === 'line' ? 'bg-navy text-white shadow-sm' : 'text-slate hover:text-navy'}`}
+              title="Line Chart"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>show_chart</span>
+              <span>Line</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Visual Chart Box from Image 2 top */}
+        <div className="bg-surface-high border border-slate/20 rounded-2xl p-6 min-h-[300px] flex flex-col justify-between relative overflow-hidden">
+          <div className="flex justify-between items-center text-xs font-bold text-navy mb-4">
+            <span>Displaying {chartType.toUpperCase()} CHART — {criteria} ({roleMode === 'admin' ? 'Global Platform' : 'Vendor Portfolio'})</span>
+            <span className="badge-amber">Interactive Canvas</span>
+          </div>
+
+          {/* Chart Visual Representation */}
+          <div className="flex-1 flex items-end justify-around gap-6 py-6 border-b-2 border-l-2 border-slate/30 pl-4 pr-4 min-h-[220px]">
+            {chartType === 'bar' && (
+              /* Exact 5 Bars from Image 2 top */
+              [
+                { label: 'Excavators', h: '65%', val: '$320k' },
+                { label: 'Forklifts', h: '45%', val: '$210k' },
+                { label: 'Villas', h: '88%', val: '$440k' },
+                { label: 'Cranes', h: '60%', val: '$290k' },
+                { label: 'Scaffolding', h: '60%', val: '$222k' },
+              ].map((bar, idx) => (
+                <div key={idx} className="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
+                  <span className="text-[11px] font-bold text-purple-700 opacity-0 group-hover:opacity-100 transition-opacity">{bar.val}</span>
+                  <div
+                    style={{ height: bar.h }}
+                    className="w-full max-w-[64px] bg-blue-600 group-hover:bg-amber rounded-t-xl transition-all shadow-md relative"
+                  />
+                  <span className="text-[10px] font-bold text-slate mt-1 truncate max-w-[70px]">{bar.label}</span>
+                </div>
+              ))
+            )}
+
+            {chartType === 'pie' && (
+              <div className="w-full flex items-center justify-center gap-8 py-4">
+                <div className="w-44 h-44 rounded-full border-8 border-purple-600 border-t-amber border-r-blue-600 flex items-center justify-center shadow-inner">
+                  <span className="text-xs font-black text-navy">55% / 30% / 15%</span>
+                </div>
+                <div className="space-y-2 text-xs font-bold text-navy">
+                  <div className="flex items-center gap-2"><span className="w-3 h-3 bg-purple-600 rounded" /><span>Heavy Machinery (55%)</span></div>
+                  <div className="flex items-center gap-2"><span className="w-3 h-3 bg-blue-600 rounded" /><span>Luxury Villas (30%)</span></div>
+                  <div className="flex items-center gap-2"><span className="w-3 h-3 bg-amber rounded" /><span>Power Tools (15%)</span></div>
+                </div>
+              </div>
+            )}
+
+            {chartType === 'line' && (
+              <div className="w-full h-full flex items-center justify-center flex-col gap-2">
+                <div className="w-full h-32 border-b border-purple-600/50 flex items-end justify-between px-6 relative">
+                  <span className="material-symbols-outlined text-purple-600 text-6xl absolute left-12 top-6 animate-pulse">show_chart</span>
+                  <span className="text-xs font-bold text-navy">Trend slope +18.4% upward trajectory across Q1 → Q3</span>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -186,11 +305,6 @@ export default function AdminReportsPage() {
               ))}
             </tbody>
           </table>
-        </div>
-
-        <div className="p-4 bg-ivory border-t border-slate/15 flex justify-between items-center text-xs text-slate font-semibold">
-          <span>Displaying 3 of 3 records for {roleMode === 'admin' ? 'Platform System' : 'Vendor ID #VND-849'}</span>
-          <span className="text-purple-700 font-bold underline cursor-pointer" onClick={() => triggerToast('Opening complete audit log...')}>View Full Audit Log →</span>
         </div>
       </div>
     </div>

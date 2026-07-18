@@ -32,14 +32,38 @@ const initialOrders: OrderItem[] = [
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderItem[]>(initialOrders);
-  // Default view is 'list' as specified in Image 3 ("List view by default")
   const [view, setView] = useState<'list' | 'kanban'>('list');
   const [searchQ, setSearchQ] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<'All' | 'Today' | 'Pickup' | 'Return' | 'Late'>('All');
   const [last7Days, setLast7Days] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [lateFee, setLateFee] = useState('50.00');
+
+  // Modal Views for New Order Page (Image 1) and Invoice Page (Image 3)
+  const [modalMode, setModalMode] = useState<'none' | 'newOrder' | 'invoice'>('none');
+
+  // New Order / Edit Order State (Image 1 & Image 3)
+  const [orderForm, setOrderForm] = useState({
+    id: 'SO0075',
+    customer: 'Wood Corner',
+    invoiceAddress: '24 Industrial Blvd, Suite 400, Springfield',
+    deliveryAddress: 'Site B Construction Yard, 102 East Ave, Springfield',
+    startDate: '2026-07-18',
+    endDate: '2026-07-25',
+    priceList: 'Corporate Tier 1 (10% Off)',
+    // Status step from Image 1: 'Quotation' | 'Quotation Sent' | 'Sale Order'
+    statusStep: 'Quotation' as 'Quotation' | 'Quotation Sent' | 'Sale Order',
+  });
+
+  // Invoice Page State (Image 3 bottom)
+  const [invoiceForm, setInvoiceForm] = useState({
+    id: 'INV/2026/0001',
+    customer: 'Wood Corner',
+    invoiceAddress: '24 Industrial Blvd, Suite 400, Springfield',
+    deliveryAddress: 'Site B Construction Yard, 102 East Ave, Springfield',
+    invoiceDate: '2026-07-18',
+    // Invoice status: 'Draft' | 'Posted'
+    invoiceStep: 'Draft' as 'Draft' | 'Posted',
+  });
+
   const [toast, setToast] = useState<string | null>(null);
 
   const triggerToast = (msg: string) => {
@@ -60,9 +84,43 @@ export default function AdminOrdersPage() {
     Late: orders.filter((o) => o.category === 'Late').length,
   };
 
-  const openDrawer = (order: OrderItem) => {
-    setSelectedOrder(order);
-    setDrawerOpen(true);
+  const openNewOrderForm = (existing?: OrderItem) => {
+    if (existing) {
+      setOrderForm({
+        id: existing.id,
+        customer: existing.customer,
+        invoiceAddress: `${existing.customer} HQ, Industrial Avenue 102`,
+        deliveryAddress: `${existing.customer} Site Depot, Sector 4`,
+        startDate: '2026-07-18',
+        endDate: '2026-07-25',
+        priceList: 'Corporate Tier 1 (10% Off)',
+        statusStep: existing.status === 'Quotation' ? 'Quotation' : 'Sale Order',
+      });
+    } else {
+      setOrderForm({
+        id: `SO00${Math.floor(10 + Math.random() * 89)}`,
+        customer: 'Wood Corner',
+        invoiceAddress: '24 Industrial Blvd, Suite 400, Springfield',
+        deliveryAddress: 'Site B Construction Yard, 102 East Ave, Springfield',
+        startDate: '2026-07-18',
+        endDate: '2026-07-25',
+        priceList: 'Corporate Tier 1 (10% Off)',
+        statusStep: 'Quotation',
+      });
+    }
+    setModalMode('newOrder');
+  };
+
+  const openInvoicePage = () => {
+    setInvoiceForm({
+      id: `INV/2026/000${Math.floor(1 + Math.random() * 9)}`,
+      customer: orderForm.customer,
+      invoiceAddress: orderForm.invoiceAddress,
+      deliveryAddress: orderForm.deliveryAddress,
+      invoiceDate: '2026-07-18',
+      invoiceStep: 'Draft',
+    });
+    setModalMode('invoice');
   };
 
   return (
@@ -75,15 +133,14 @@ export default function AdminOrdersPage() {
         </div>
       )}
 
-      {/* Top Bar with View Switcher and Actions from Image 3 & Image 5 */}
+      {/* Top Bar with View Switcher and Actions */}
       <div className="card p-5 mb-6 shadow-md border-slate/15">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* Left Action Buttons */}
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-black text-navy flex items-center gap-2">
               <span>Rental Order</span>
               <button
-                onClick={() => triggerToast('Rental order settings & gear configuration opened.')}
+                onClick={() => triggerToast('Rental order policies & gear configuration opened.')}
                 className="text-slate hover:text-navy p-1 rounded transition-colors"
                 title="Configuration"
               >
@@ -91,7 +148,7 @@ export default function AdminOrdersPage() {
               </button>
             </h1>
             <button
-              onClick={() => triggerToast('Opening New Rental Order dialog box...')}
+              onClick={() => openNewOrderForm()}
               className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-1.5 rounded-lg text-xs shadow-sm transition-all flex items-center gap-1"
             >
               <span className="material-symbols-outlined shrink-0" style={{ fontSize: '16px' }}>add</span>
@@ -99,7 +156,6 @@ export default function AdminOrdersPage() {
             </button>
           </div>
 
-          {/* Search Box */}
           <div className="flex-1 max-w-md relative">
             <span className="material-symbols-outlined shrink-0 absolute left-3 top-1/2 -translate-y-1/2 text-slate/40" style={{ fontSize: '18px' }}>search</span>
             <input
@@ -111,7 +167,6 @@ export default function AdminOrdersPage() {
             />
           </div>
 
-          {/* Right View Switcher & Profile Toggle from Image 3 */}
           <div className="flex items-center gap-4 justify-between md:justify-end">
             <div className="flex items-center gap-1 bg-ivory p-1 rounded-lg border border-slate/20">
               <span className="text-[10px] font-bold text-slate px-2 hidden sm:inline">View Switcher:</span>
@@ -133,7 +188,7 @@ export default function AdminOrdersPage() {
           </div>
         </div>
 
-        {/* Filter Pills and KPI Bar from Image 3 */}
+        {/* Filter Pills and KPI Bar */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mt-5 pt-4 border-t border-slate/10">
           <div className="flex items-center gap-2 flex-wrap">
             <button
@@ -185,7 +240,7 @@ export default function AdminOrdersPage() {
         </div>
       </div>
 
-      {/* List View Table from Image 3 ("List view by default") */}
+      {/* List View Table */}
       {view === 'list' && (
         <div className="space-y-4 animate-fade-in">
           <div className="card rounded-xl overflow-x-auto border-slate/15 shadow-md">
@@ -206,7 +261,7 @@ export default function AdminOrdersPage() {
               </thead>
               <tbody className="divide-y divide-slate/10 text-xs font-medium text-navy bg-white">
                 {filteredOrders.map((o) => (
-                  <tr key={o.id} onClick={() => openDrawer(o)} className="hover:bg-amber/5 cursor-pointer transition-colors">
+                  <tr key={o.id} onClick={() => openNewOrderForm(o)} className="hover:bg-amber/5 cursor-pointer transition-colors">
                     <td className="p-3.5 text-center" onClick={(e) => e.stopPropagation()}>
                       <input type="checkbox" className="rounded border-slate/30 text-purple-600" />
                     </td>
@@ -231,7 +286,6 @@ export default function AdminOrdersPage() {
             </table>
           </div>
 
-          {/* Legend Box from Image 3 Bottom */}
           <div className="bg-white border border-slate/20 rounded-xl p-4 shadow-sm flex flex-wrap items-center gap-6 text-xs font-semibold">
             <span className="text-slate uppercase text-[10px] tracking-wider font-bold">Invoice Status Legend:</span>
             <div className="flex items-center gap-2">
@@ -254,7 +308,7 @@ export default function AdminOrdersPage() {
         </div>
       )}
 
-      {/* Kanban View from Image 5 */}
+      {/* Kanban View */}
       {view === 'kanban' && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 animate-fade-in">
           {(['Today', 'Pickup', 'Return', 'Late'] as const).map((col) => {
@@ -277,7 +331,7 @@ export default function AdminOrdersPage() {
                   {colOrders.map((o) => (
                     <div
                       key={o.id}
-                      onClick={() => openDrawer(o)}
+                      onClick={() => openNewOrderForm(o)}
                       className="bg-white border border-slate/20 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-purple-500 transition-all cursor-pointer flex flex-col gap-2.5"
                     >
                       <div className="flex justify-between items-start">
@@ -312,58 +366,420 @@ export default function AdminOrdersPage() {
         </div>
       )}
 
-      {/* Order Detail Side Drawer */}
-      {drawerOpen && selectedOrder && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white w-full max-w-lg h-full overflow-y-auto shadow-2xl p-6 flex flex-col justify-between animate-slide-left">
-            <div>
-              <div className="flex justify-between items-center pb-4 border-b border-slate/15">
-                <div>
-                  <h3 className="text-lg font-bold text-navy">Order Details — {selectedOrder.id}</h3>
-                  <p className="text-xs text-slate">{selectedOrder.customer} ({selectedOrder.email})</p>
-                </div>
-                <button onClick={() => setDrawerOpen(false)} className="w-8 h-8 rounded-full bg-slate/10 hover:bg-slate/20 flex items-center justify-center">
-                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>close</span>
+      {/* NEW ORDER / EDIT RENTAL ORDER PAGE MODAL (Image 1 & Image 3 top) */}
+      {modalMode === 'newOrder' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-5xl w-full overflow-hidden shadow-2xl border border-slate/20 flex flex-col max-h-[92vh]">
+            {/* Top Bar from Image 1: [ New ] Rental order [ ✔ ] [ ✖ ] */}
+            <div className="bg-navy text-white px-6 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="px-2.5 py-1 rounded bg-purple-600 text-[11px] font-black uppercase tracking-wider">New</span>
+                <span className="text-base font-bold">Rental order</span>
+                <button
+                  type="button"
+                  onClick={() => { triggerToast(`Order ${orderForm.id} saved successfully!`); setModalMode('none'); }}
+                  className="w-7 h-7 rounded bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center transition-colors"
+                  title="Save & Confirm"
+                >
+                  <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>check</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalMode('none')}
+                  className="w-7 h-7 rounded bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center transition-colors"
+                  title="Discard"
+                >
+                  <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>close</span>
                 </button>
               </div>
+              <span className="text-xs text-slate-300 font-mono font-bold">Form View: {orderForm.id}</span>
+            </div>
 
-              <div className="py-6 space-y-4 text-xs font-medium text-navy">
-                <div className="bg-ivory p-4 rounded-xl border border-slate/15 space-y-2">
-                  <div className="flex justify-between"><span className="text-slate">Equipment Item:</span><span className="font-bold">{selectedOrder.item}</span></div>
-                  <div className="flex justify-between"><span className="text-slate">Pickup Date:</span><span>{selectedOrder.pickupDate}</span></div>
-                  <div className="flex justify-between"><span className="text-slate">Return Due:</span><span>{selectedOrder.returnDate}</span></div>
-                  <div className="flex justify-between"><span className="text-slate">Total Amount:</span><span className="font-bold font-currency">${selectedOrder.total}</span></div>
-                  <div className="flex justify-between"><span className="text-slate">Security Deposit:</span><span className="font-bold text-amber">${selectedOrder.deposit}</span></div>
-                </div>
+            {/* Second Action & Stepper Bar from Image 1 & Image 3 */}
+            <div className="bg-ivory px-6 py-3 border-b border-slate/15 flex flex-wrap items-center justify-between gap-4">
+              {/* Left Action Buttons depending on statusStep */}
+              <div className="flex items-center gap-2">
+                {orderForm.statusStep === 'Sale Order' ? (
+                  /* Buttons when status is Sale Order (Image 3 annotation: Make it visible only when sale order/rental order is confirmed) */
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => { triggerToast('Opening Invoice creation workflow...'); openInvoicePage(); }}
+                      className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-1.5 rounded text-xs shadow-sm transition-all"
+                    >
+                      Create Invoice
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => triggerToast(`Pickup verified and equipment marked active for ${orderForm.id}`)}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1.5 rounded text-xs shadow-sm transition-all"
+                    >
+                      Pickup
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { triggerToast('Printing order confirmation agreement...'); window.print(); }}
+                      className="btn-secondary px-4 py-1.5 text-xs font-bold"
+                    >
+                      Print
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setOrderForm({ ...orderForm, statusStep: 'Quotation' }); triggerToast('Order cancelled and reset to quotation.'); }}
+                      className="btn-secondary px-4 py-1.5 text-xs font-bold text-rose-600"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  /* Buttons when Quotation or Quotation Sent (Image 1) */
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOrderForm({ ...orderForm, statusStep: 'Quotation Sent' });
+                        triggerToast('Quotation sent to customer! State changed from Quotation to Quotation Sent.');
+                      }}
+                      className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-1.5 rounded text-xs shadow-sm transition-all"
+                    >
+                      Send
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOrderForm({ ...orderForm, statusStep: 'Sale Order' });
+                        triggerToast('Quotation confirmed! State changed to Sale Order. Create Invoice & Pickup buttons now visible.');
+                      }}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-1.5 rounded text-xs shadow-sm transition-all"
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { triggerToast('Printing quotation proposal...'); window.print(); }}
+                      className="btn-secondary px-4 py-1.5 text-xs font-bold"
+                    >
+                      Print
+                    </button>
+                  </>
+                )}
+              </div>
 
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-slate uppercase">Deduct Late Fee / Damage Assessment ($)</label>
-                  <input
-                    type="number"
-                    value={lateFee}
-                    onChange={(e) => setLateFee(e.target.value)}
-                    className="input-field text-sm font-bold"
-                  />
-                  <p className="text-[11px] text-slate">Deducted from ${selectedOrder.deposit} deposit during inspection.</p>
-                </div>
+              {/* Right Status Stepper from Image 1: Quotation -> Quotation Sent -> Sale Order */}
+              <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-xl border border-slate/20 text-xs font-bold">
+                {(['Quotation', 'Quotation Sent', 'Sale Order'] as const).map((step) => (
+                  <button
+                    key={step}
+                    type="button"
+                    onClick={() => setOrderForm({ ...orderForm, statusStep: step })}
+                    className={`px-3 py-1 rounded-lg transition-all ${
+                      orderForm.statusStep === step
+                        ? 'bg-navy text-white shadow-sm font-black'
+                        : 'text-slate hover:text-navy'
+                    }`}
+                  >
+                    {step}
+                  </button>
+                ))}
               </div>
             </div>
 
-            <div className="pt-4 border-t border-slate/15 flex gap-3">
-              <button
-                type="button"
-                onClick={() => { triggerToast(`Order ${selectedOrder.id} confirmed and marked as Paid/Invoiced.`); setDrawerOpen(false); }}
-                className="btn-primary flex-1 py-3 text-xs font-bold"
-              >
-                Mark Invoiced & Process Return
-              </button>
-              <button
-                type="button"
-                onClick={() => setDrawerOpen(false)}
-                className="btn-secondary px-5 py-3 text-xs font-bold"
-              >
-                Close
-              </button>
+            {/* Form Fields Body from Image 1 */}
+            <div className="p-6 space-y-6 overflow-y-auto flex-1">
+              <div>
+                <h2 className="text-2xl font-black font-mono text-purple-700">{orderForm.id}</h2>
+                <span className="text-xs text-slate font-medium">Rental Order Document & Schedule</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-ivory/60 border border-slate/15 rounded-xl p-5">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate uppercase mb-1">Customer</label>
+                    <select
+                      value={orderForm.customer}
+                      onChange={(e) => setOrderForm({ ...orderForm, customer: e.target.value })}
+                      className="input-field text-xs py-2 font-bold text-navy bg-white"
+                    >
+                      <option>Wood Corner</option>
+                      <option>Smith</option>
+                      <option>John</option>
+                      <option>Alex</option>
+                      <option>Sam</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate uppercase mb-1">Invoice Address</label>
+                    <input
+                      type="text"
+                      value={orderForm.invoiceAddress}
+                      onChange={(e) => setOrderForm({ ...orderForm, invoiceAddress: e.target.value })}
+                      className="input-field text-xs py-2 font-medium bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate uppercase mb-1">Delivery Address</label>
+                    <input
+                      type="text"
+                      value={orderForm.deliveryAddress}
+                      onChange={(e) => setOrderForm({ ...orderForm, deliveryAddress: e.target.value })}
+                      className="input-field text-xs py-2 font-medium bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate uppercase mb-1">Rental Period (Start date → End date)</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="date"
+                        value={orderForm.startDate}
+                        onChange={(e) => setOrderForm({ ...orderForm, startDate: e.target.value })}
+                        className="input-field text-xs py-2 font-semibold bg-white"
+                      />
+                      <input
+                        type="date"
+                        value={orderForm.endDate}
+                        onChange={(e) => setOrderForm({ ...orderForm, endDate: e.target.value })}
+                        className="input-field text-xs py-2 font-semibold bg-white"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate uppercase mb-1">Price List</label>
+                    <select
+                      value={orderForm.priceList}
+                      onChange={(e) => setOrderForm({ ...orderForm, priceList: e.target.value })}
+                      className="input-field text-xs py-2 font-bold text-navy bg-white"
+                    >
+                      <option>Corporate Tier 1 (10% Off)</option>
+                      <option>Standard Public Rate</option>
+                      <option>Summer Promo 2026</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Line Section from Image 1 */}
+              <div className="border border-slate/20 rounded-xl overflow-hidden bg-white shadow-sm">
+                <div className="bg-surface-high px-4 py-2.5 border-b border-slate/15 flex items-center gap-4">
+                  <span className="text-xs font-black text-navy uppercase border-b-2 border-purple-600 pb-1">Order Line</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-ivory border-b border-slate/15 text-[11px] uppercase text-slate font-bold">
+                      <tr>
+                        <th className="py-2.5 px-4">Product</th>
+                        <th className="py-2.5 px-4 text-center">Quantity</th>
+                        <th className="py-2.5 px-4">Unit</th>
+                        <th className="py-2.5 px-4">Unit Price</th>
+                        <th className="py-2.5 px-4 text-center">Taxes</th>
+                        <th className="py-2.5 px-4 text-right">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate/10 font-semibold text-navy">
+                      <tr>
+                        <td className="py-3 px-4">
+                          <span>Computers</span>
+                          <span className="block text-[10px] text-slate font-normal">[{orderForm.startDate} → {orderForm.endDate}]</span>
+                        </td>
+                        <td className="py-3 px-4 text-center">20</td>
+                        <td className="py-3 px-4">Units</td>
+                        <td className="py-3 px-4 font-currency">Rs 20,000</td>
+                        <td className="py-3 px-4 text-center">18%</td>
+                        <td className="py-3 px-4 text-right font-bold font-currency">Rs 4,00,000</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="p-4 bg-ivory/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div className="flex items-center gap-4 text-xs font-bold text-purple-700 underline">
+                    <button type="button" onClick={() => triggerToast('Opening product selector to append order line...')}>+ Add a Product</button>
+                    <button type="button" onClick={() => triggerToast('Adding internal remark note...')}>+ Add a note</button>
+                  </div>
+                  <div className="space-y-1 text-xs font-bold text-navy text-right w-full md:w-64">
+                    <div className="flex justify-between"><span className="text-slate">Untaxed Amount:</span><span className="font-currency">Rs 4,00,000</span></div>
+                    <div className="flex justify-between"><span className="text-slate">Taxes (18%):</span><span className="font-currency">Rs 72,000</span></div>
+                    <div className="flex justify-between pt-1 border-t border-slate/20 text-sm font-black"><span className="text-navy">Total:</span><span className="font-currency text-purple-700">Rs 4,72,000</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* INVOICE PAGE MODAL (Draft Invoice / INV/2026/0001 from Image 3 bottom) */}
+      {modalMode === 'invoice' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-5xl w-full overflow-hidden shadow-2xl border border-slate/20 flex flex-col max-h-[92vh]">
+            {/* Top Bar from Image 3: [ New ] [ ✔ ] [ ✖ ] */}
+            <div className="bg-navy text-white px-6 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="px-2.5 py-1 rounded bg-purple-600 text-[11px] font-black uppercase tracking-wider">New</span>
+                <span className="text-base font-bold">Draft Invoice</span>
+                <button
+                  type="button"
+                  onClick={() => { triggerToast(`Invoice ${invoiceForm.id} saved & confirmed!`); setModalMode('none'); }}
+                  className="w-7 h-7 rounded bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center transition-colors"
+                  title="Confirm"
+                >
+                  <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>check</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalMode('newOrder')}
+                  className="w-7 h-7 rounded bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center transition-colors"
+                  title="Close / Back to Order"
+                >
+                  <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>close</span>
+                </button>
+              </div>
+              <span className="text-xs text-slate-300 font-mono font-bold">Invoice Form: {invoiceForm.id}</span>
+            </div>
+
+            {/* Second Action & Stepper Bar from Image 3: [ Send ] [ Print ] [ Pay ] and right [ Draft ] [ Posted ] */}
+            <div className="bg-ivory px-6 py-3 border-b border-slate/15 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setInvoiceForm({ ...invoiceForm, invoiceStep: 'Posted' }); triggerToast('Invoice sent to customer email & posted to ledger!'); }}
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-1.5 rounded text-xs shadow-sm transition-all"
+                >
+                  Send
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { triggerToast('Printing invoice INV/2026/0001...'); window.print(); }}
+                  className="btn-secondary px-4 py-1.5 text-xs font-bold"
+                >
+                  Print
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setInvoiceForm({ ...invoiceForm, invoiceStep: 'Posted' }); triggerToast('Payment verified! Invoice status marked as Posted.'); }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-1.5 rounded text-xs shadow-sm transition-all"
+                >
+                  Pay
+                </button>
+              </div>
+
+              {/* Right Status Stepper: Draft -> Posted */}
+              <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-xl border border-slate/20 text-xs font-bold">
+                {(['Draft', 'Posted'] as const).map((step) => (
+                  <button
+                    key={step}
+                    type="button"
+                    onClick={() => setInvoiceForm({ ...invoiceForm, invoiceStep: step })}
+                    className={`px-4 py-1 rounded-lg transition-all ${
+                      invoiceForm.invoiceStep === step
+                        ? 'bg-navy text-white shadow-sm font-black'
+                        : 'text-slate hover:text-navy'
+                    }`}
+                  >
+                    {step}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Form Fields Body from Image 3 */}
+            <div className="p-6 space-y-6 overflow-y-auto flex-1">
+              <div>
+                <h2 className="text-2xl font-black font-mono text-purple-700">{invoiceForm.id}</h2>
+                <span className="text-xs text-slate font-medium">Commercial Rental Invoice & Tax Billing</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-ivory/60 border border-slate/15 rounded-xl p-5">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate uppercase mb-1">Customer</label>
+                    <input
+                      type="text"
+                      value={invoiceForm.customer}
+                      onChange={(e) => setInvoiceForm({ ...invoiceForm, customer: e.target.value })}
+                      className="input-field text-xs py-2 font-bold text-navy bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate uppercase mb-1">Invoice Address</label>
+                    <input
+                      type="text"
+                      value={invoiceForm.invoiceAddress}
+                      onChange={(e) => setInvoiceForm({ ...invoiceForm, invoiceAddress: e.target.value })}
+                      className="input-field text-xs py-2 font-medium bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate uppercase mb-1">Delivery Address</label>
+                    <input
+                      type="text"
+                      value={invoiceForm.deliveryAddress}
+                      onChange={(e) => setInvoiceForm({ ...invoiceForm, deliveryAddress: e.target.value })}
+                      className="input-field text-xs py-2 font-medium bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate uppercase mb-1">Invoice date</label>
+                    <input
+                      type="date"
+                      value={invoiceForm.invoiceDate}
+                      onChange={(e) => setInvoiceForm({ ...invoiceForm, invoiceDate: e.target.value })}
+                      className="input-field text-xs py-2 font-semibold bg-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Invoice Lines Section from Image 3 */}
+              <div className="border border-slate/20 rounded-xl overflow-hidden bg-white shadow-sm">
+                <div className="bg-surface-high px-4 py-2.5 border-b border-slate/15 flex items-center gap-4">
+                  <span className="text-xs font-black text-navy uppercase border-b-2 border-purple-600 pb-1">Invoice Lines</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-ivory border-b border-slate/15 text-[11px] uppercase text-slate font-bold">
+                      <tr>
+                        <th className="py-2.5 px-4">Product</th>
+                        <th className="py-2.5 px-4 text-center">Quantity</th>
+                        <th className="py-2.5 px-4">Unit</th>
+                        <th className="py-2.5 px-4">Unit Price</th>
+                        <th className="py-2.5 px-4 text-center">Taxes</th>
+                        <th className="py-2.5 px-4 text-right">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate/10 font-semibold text-navy">
+                      <tr>
+                        <td className="py-3 px-4">
+                          <span>Computers</span>
+                          <span className="block text-[10px] text-slate font-normal">[{orderForm.startDate} → {orderForm.endDate}]</span>
+                        </td>
+                        <td className="py-3 px-4 text-center">20</td>
+                        <td className="py-3 px-4">Units</td>
+                        <td className="py-3 px-4 font-currency">Rs 20,000</td>
+                        <td className="py-3 px-4 text-center">18%</td>
+                        <td className="py-3 px-4 text-right font-bold font-currency">Rs 4,00,000</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="p-4 bg-ivory/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div className="flex items-center gap-4 text-xs font-bold text-purple-700 underline">
+                    <button type="button" onClick={() => triggerToast('Adding additional invoice line product...')}>+ Add a Product</button>
+                    <button type="button" onClick={() => triggerToast('Appending accounting note...')}>+ Add a note</button>
+                  </div>
+                  <div className="space-y-1 text-xs font-bold text-navy text-right w-full md:w-64">
+                    <div className="flex justify-between"><span className="text-slate">Untaxed Amount:</span><span className="font-currency">Rs 4,00,000</span></div>
+                    <div className="flex justify-between"><span className="text-slate">Taxes (18%):</span><span className="font-currency">Rs 72,000</span></div>
+                    <div className="flex justify-between pt-1 border-t border-slate/20 text-sm font-black"><span className="text-navy">Total:</span><span className="font-currency text-purple-700">Rs 4,72,000</span></div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
