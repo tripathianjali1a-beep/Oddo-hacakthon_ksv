@@ -12,7 +12,7 @@ const pillars = [
 
 const safetySteps = [
   'Read the listing details, specs, and reviews before booking.',
-  'Keep all communication and payments on LuxRent.',
+  'Keep all communication and payments on Rentora.',
   'Inspect the item at pickup and report issues immediately.',
   'Return on time and in the condition you received it.',
 ];
@@ -23,7 +23,7 @@ export default function TrustPage() {
       <PageHero
         eyebrow="Trust & Safety"
         title="Rent with total peace of mind"
-        subtitle="Safety isn't a feature — it's the foundation. Here's how we protect every renter and owner on LuxRent."
+        subtitle="Safety isn't a feature — it's the foundation. Here's how we protect every renter and owner on Rentora."
         icon="verified_user"
         crumbs={[{ label: 'Home', href: '/home' }, { label: 'Trust & Safety' }]}
       />
@@ -46,7 +46,7 @@ export default function TrustPage() {
       {/* Safety checklist */}
       <div className="max-w-[1100px] mx-auto px-6 mt-14 grid lg:grid-cols-2 gap-6 items-center">
         <div className="card overflow-hidden h-72 lg:h-80">
-          <img src="https://images.unsplash.com/photo-1521791136064-7986c2920216?w=900&q=80" alt="Handshake" className="w-full h-full object-cover" />
+          <img src="/images/marketing/handshake-trust.jpg" alt="Handshake sealing a trusted rental agreement" className="w-full h-full object-cover" />
         </div>
         <div className="card p-6 md:p-8">
           <h2 className="text-h3 text-navy mb-4">Your safety checklist</h2>

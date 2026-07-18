@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { Product } from '@/lib/types';
 
 const statusMap: Record<string, { label: string; cls: string }> = {
@@ -11,9 +12,18 @@ const statusMap: Record<string, { label: string; cls: string }> = {
 };
 
 export default function BrowsePage() {
+  return (
+    <Suspense>
+      <BrowseContent />
+    </Suspense>
+  );
+}
+
+function BrowseContent() {
+  const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(searchParams.get('search') ?? '');
   const [sort, setSort] = useState('recommended');
   const [selectedCats, setSelectedCats] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
@@ -30,6 +40,13 @@ export default function BrowsePage() {
       .catch(() => setProducts([]))
       .finally(() => setLoading(false));
   }, []);
+
+  // Sync search box and category filter with URL params (header search, nav links).
+  useEffect(() => {
+    setSearch(searchParams.get('search') ?? '');
+    const cat = searchParams.get('cat');
+    if (cat && cat !== 'all') setSelectedCats([cat]);
+  }, [searchParams]);
 
   const categories = Array.from(new Set(products.map((p) => p.category)));
   const brands = Array.from(new Set(products.map((p) => p.brand)));
@@ -184,7 +201,7 @@ export default function BrowsePage() {
                     <p className="text-slate text-xs leading-relaxed mb-4 line-clamp-2">{product.description}</p>
                     <div className="mt-auto">
                       <div className="grid grid-cols-3 gap-1 mb-4">
-                        {[{ label: 'Hourly', val: product.hourly ? `$${product.hourly}` : '—' }, { label: 'Daily', val: `$${product.daily}` }, { label: 'Weekly', val: `$${product.weekly}` }].map((r) => (
+                        {[{ label: 'Hourly', val: product.hourly ? `₹${product.hourly}` : '—' }, { label: 'Daily', val: `₹${product.daily}` }, { label: 'Weekly', val: `₹${product.weekly}` }].map((r) => (
                           <div key={r.label} className="text-center bg-ivory rounded border border-slate/10 py-2">
                             <p className="text-[10px] text-slate uppercase font-semibold mb-0.5">{r.label}</p>
                             <p className="text-navy text-sm font-bold font-currency">{r.val}</p>

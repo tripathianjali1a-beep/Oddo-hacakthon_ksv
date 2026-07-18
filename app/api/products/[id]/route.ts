@@ -21,7 +21,7 @@ export async function PUT(request: Request, { params }: Ctx) {
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const body = await request.json();
-  const fields = ['name', 'brand', 'sku', 'category', 'description', 'status', 'hourly', 'daily', 'weekly', 'monthly', 'deposit', 'rating', 'reviews', 'image'];
+  const fields = ['name', 'brand', 'sku', 'category', 'description', 'status', 'hourly', 'daily', 'weekly', 'monthly', 'deposit', 'quantity', 'rating', 'reviews', 'image'];
   const sets: string[] = [];
   const values: Record<string, unknown> = { id: Number(id) };
   for (const f of fields) {

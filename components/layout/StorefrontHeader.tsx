@@ -1,8 +1,9 @@
 'use client';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Logo from '@/components/ui/Logo';
+import { cartCount } from '@/lib/cart';
 
 const navLinks = [
   { label: 'Browse', href: '/browse' },
@@ -26,7 +27,8 @@ const iconSym: React.CSSProperties = {
 
 export default function StorefrontHeader() {
   const pathname = usePathname();
-  const [cartCount] = useState(2);
+  const router = useRouter();
+  const [itemCount, setItemCount] = useState(0);
   const [searchValue, setSearchValue] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -37,6 +39,25 @@ export default function StorefrontHeader() {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  // Live cart badge: sync on mount, on same-tab cart changes, and across tabs.
+  useEffect(() => {
+    const sync = () => setItemCount(cartCount());
+    sync();
+    window.addEventListener('cart:changed', sync);
+    window.addEventListener('storage', sync);
+    return () => {
+      window.removeEventListener('cart:changed', sync);
+      window.removeEventListener('storage', sync);
+    };
+  }, []);
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchValue.trim();
+    setMobileOpen(false);
+    router.push(q ? `/browse?search=${encodeURIComponent(q)}` : '/browse');
+  };
 
   return (
     <header className="sticky top-0 z-50 px-3 sm:px-5 pt-3 sm:pt-4">
@@ -52,16 +73,16 @@ export default function StorefrontHeader() {
           <Link href="/home" className="shrink-0 transition-transform hover:scale-[1.03] active:scale-95">
             <Logo size={34} />
           </Link>
-          <div className="relative hidden md:flex items-center group">
+          <form onSubmit={submitSearch} className="relative hidden md:flex items-center group">
             <span className="material-symbols-outlined absolute left-3 text-slate/50 group-focus-within:text-amber transition-colors" style={{ fontSize: '18px' }}>search</span>
             <input
               type="text"
-              placeholder="Search properties or equipment..."
+              placeholder="Search excavators, cameras, gear..."
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               className="pl-10 pr-3.5 py-2.5 text-[13px] border border-slate/20 rounded-full bg-ivory/70 outline-none w-52 lg:w-72 focus:w-56 lg:focus:w-80 focus:border-amber focus:bg-white focus:shadow-[0_0_0_3px_rgba(217,119,6,0.12)] transition-all duration-300"
             />
-          </div>
+          </form>
         </div>
 
         {/* Desktop nav */}
@@ -91,9 +112,9 @@ export default function StorefrontHeader() {
         <div className="flex items-center gap-1 shrink-0">
           <Link href="/cart" className="relative p-2.5 rounded-full text-slate hover:text-navy hover:bg-navy/[0.05] flex items-center transition-colors">
             <span style={iconSym}>shopping_cart</span>
-            {cartCount > 0 && (
+            {itemCount > 0 && (
               <span className="absolute top-1 right-1 bg-amber text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-white">
-                {cartCount}
+                {itemCount}
               </span>
             )}
           </Link>
@@ -124,7 +145,7 @@ export default function StorefrontHeader() {
       {/* Mobile dropdown */}
       {mobileOpen && (
         <div className="lg:hidden max-w-[1440px] mx-auto mt-2 rounded-2xl border border-slate/15 bg-white/90 backdrop-blur-xl shadow-[0_16px_40px_-12px_rgba(15,23,42,0.28)] px-5 py-3 animate-fade-in">
-          <div className="relative flex items-center mb-3 md:hidden">
+          <form onSubmit={submitSearch} className="relative flex items-center mb-3 md:hidden">
             <span className="material-symbols-outlined absolute left-2.5 text-slate/50" style={{ fontSize: '18px' }}>search</span>
             <input
               type="text"
@@ -133,7 +154,7 @@ export default function StorefrontHeader() {
               onChange={(e) => setSearchValue(e.target.value)}
               className="pl-9 pr-3.5 py-2 text-[13px] border border-slate/20 rounded-md bg-ivory outline-none w-full focus:border-amber transition-colors"
             />
-          </div>
+          </form>
           <nav className="flex flex-col">
             {navLinks.map((link) => (
               <Link

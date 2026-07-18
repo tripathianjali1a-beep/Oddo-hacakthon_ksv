@@ -3,9 +3,9 @@ import { useState, useEffect, useMemo } from 'react';
 import type { Order, Product, DashboardData } from '@/lib/types';
 
 const fmtMoney = (n: number) => {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`;
-  return `$${n.toLocaleString()}`;
+  if (n >= 1_000_000) return `₹${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `₹${(n / 1_000).toFixed(1)}K`;
+  return `₹${n.toLocaleString()}`;
 };
 
 const catColors = ['#D97706', '#0F172A', '#0EA5E9', '#10B981', '#8B5CF6', '#F59E0B', '#64748B'];
@@ -19,7 +19,7 @@ export default function AdminReportsPage() {
   useEffect(() => {
     Promise.all([
       fetch('/api/orders').then((r) => r.json()),
-      fetch('/api/products').then((r) => r.json()),
+      fetch('/api/products?all=1').then((r) => r.json()),
       fetch('/api/dashboard').then((r) => r.json()),
     ]).then(([o, p, d]) => { setOrders(o); setProducts(p); setDash(d); }).catch(() => {});
   }, []);
@@ -122,8 +122,8 @@ export default function AdminReportsPage() {
           <h2 className="text-h3 text-navy mb-5">Orders by Status</h2>
           <div className="space-y-4">
             {[
+              { key: 'reserved', label: 'Reserved', color: '#D97706' },
               { key: 'active', label: 'Active', color: '#10B981' },
-              { key: 'pending', label: 'Pending Return', color: '#D97706' },
               { key: 'returned', label: 'Returned', color: '#64748B' },
             ].map((s) => {
               const count = metrics.byStatus[s.key] || 0;

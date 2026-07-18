@@ -18,7 +18,7 @@ const sections = [
       { key: 'gracePeriod', label: 'Grace Period (Days)', type: 'number', placeholder: '0', value: '3' },
       { key: 'lateFeeType', label: 'Late Fee Type', type: 'select', options: ['Fixed Amount', 'Percentage per Day', 'Percentage per Week'], value: 'Percentage per Day' },
       { key: 'lateFeeRate', label: 'Late Fee Rate (%/day)', type: 'number', placeholder: '1.5', value: '1.5' },
-      { key: 'maxLateFee', label: 'Maximum Late Fee Cap ($)', type: 'number', placeholder: '500', value: '500' },
+      { key: 'maxLateFee', label: 'Maximum Late Fee Cap (₹)', type: 'number', placeholder: '500', value: '500' },
     ],
   },
   {

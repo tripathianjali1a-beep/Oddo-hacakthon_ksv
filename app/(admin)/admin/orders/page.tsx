@@ -3,11 +3,15 @@ import { useState, useEffect, useCallback } from 'react';
 import type { Order } from '@/lib/types';
 
 const badgeFor = (o: Order) => {
+  if (o.late) return { badge: 'badge-red', label: `Overdue ${o.daysLate}d` };
+  if (o.status === 'reserved') return { badge: 'badge-amber', label: 'Reserved' };
   if (o.status === 'active') return { badge: 'badge-green', label: 'Active' };
-  if (o.status === 'pending') return { badge: 'badge-amber', label: 'Pending Return' };
   if (o.status === 'returned') return { badge: 'badge-slate', label: 'Returned' };
-  return { badge: 'badge-slate', label: o.status };
+  return { badge: 'badge-slate', label: 'Cancelled' };
 };
+
+const fmtDate = (iso: string | null) =>
+  iso ? new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 
 const checklist = [
   'All accessories included (charger, cables)',
@@ -23,9 +27,10 @@ export default function AdminOrdersPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [view, setView] = useState<'list' | 'kanban'>('list');
   const [checkedItems, setCheckedItems] = useState<boolean[]>(checklist.map(() => false));
-  const [lateFee, setLateFee] = useState('50.00');
+  const [lateFee, setLateFee] = useState('0.00');
   const [searchQ, setSearchQ] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [actionError, setActionError] = useState('');
 
   const load = useCallback(() => {
     setLoading(true);
@@ -42,7 +47,8 @@ export default function AdminOrdersPage() {
     setSelectedOrder(order);
     setDrawerOpen(true);
     setCheckedItems(checklist.map(() => false));
-    setLateFee('50.00');
+    setLateFee(order.late ? '50.00' : '0.00');
+    setActionError('');
   };
 
   const closeDrawer = () => {
@@ -55,18 +61,27 @@ export default function AdminOrdersPage() {
   };
 
   const refund = Math.max(0, (selectedOrder?.deposit || 0) - (parseFloat(lateFee) || 0));
+  const allChecked = checkedItems.every(Boolean);
 
-  const processReturn = async () => {
+  const runAction = async (action: 'pickup' | 'return' | 'cancel') => {
     if (!selectedOrder) return;
     setProcessing(true);
-    await fetch(`/api/orders/${selectedOrder.id}`, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ status: 'returned', lateFee: parseFloat(lateFee) || 0 }),
-    });
-    setProcessing(false);
-    closeDrawer();
-    load();
+    setActionError('');
+    try {
+      const res = await fetch(`/api/orders/${selectedOrder.id}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(action === 'return' ? { action, lateFee: parseFloat(lateFee) || 0 } : { action }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setActionError(data.error || 'Action failed.'); setProcessing(false); return; }
+      setProcessing(false);
+      closeDrawer();
+      load();
+    } catch {
+      setActionError('Network error. Please try again.');
+      setProcessing(false);
+    }
   };
 
   const filtered = orders.filter((o) =>
@@ -81,7 +96,7 @@ export default function AdminOrdersPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div>
           <h1 className="text-h1 text-navy">Order Management</h1>
-          <p className="text-slate text-sm mt-1">Review and process active rentals and returns.</p>
+          <p className="text-slate text-sm mt-1">Review and process reservations, pickups and returns.</p>
         </div>
         <div className="flex items-center gap-2 mt-3 sm:mt-0">
           <div className="flex bg-surface-high p-1 rounded-lg border border-slate/10">
@@ -97,10 +112,6 @@ export default function AdminOrdersPage() {
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate/50" style={{fontSize:'18px'}}>search</span>
           <input type="text" placeholder="Search orders, customers, items..." value={searchQ} onChange={(e) => setSearchQ(e.target.value)} className="input-field pl-9 text-sm" />
         </div>
-        <button className="btn-secondary text-xs py-2 px-3">
-          <span className="material-symbols-outlined" style={{fontSize:'16px'}}>filter_list</span>
-          Filter
-        </button>
       </div>
 
       {/* List View */}
@@ -136,12 +147,12 @@ export default function AdminOrdersPage() {
                     </div>
                   </td>
                   <td className="table-cell hidden md:table-cell text-slate">{order.item}</td>
-                  <td className={`table-cell hidden lg:table-cell font-medium ${order.dueDate === 'Today' ? 'text-red-600' : 'text-slate'}`}>{order.dueDate}</td>
+                  <td className={`table-cell hidden lg:table-cell font-medium ${order.late ? 'text-red-600' : 'text-slate'}`}>{fmtDate(order.endAt)}</td>
                   <td className="table-cell">
                     <span className={b.badge}>{b.label}</span>
                   </td>
                   <td className="table-cell text-right">
-                    <button className={`transition-colors ${order.status === 'pending' ? 'text-amber hover:text-navy' : 'text-slate hover:text-navy'}`}>
+                    <button className={`transition-colors ${order.late ? 'text-amber hover:text-navy' : 'text-slate hover:text-navy'}`}>
                       <span className="material-symbols-outlined" style={{fontSize:'20px'}}>chevron_right</span>
                     </button>
                   </td>
@@ -160,9 +171,9 @@ export default function AdminOrdersPage() {
       {/* Kanban View */}
       {view === 'kanban' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {['active', 'pending', 'returned'].map((status) => {
-            const statusLabels: Record<string, string> = { active: 'Active Rentals', pending: 'Pending Return', returned: 'Returned' };
-            const statusBadge: Record<string, string> = { active: 'badge-green', pending: 'badge-amber', returned: 'badge-slate' };
+          {(['reserved', 'active', 'returned'] as const).map((status) => {
+            const statusLabels: Record<string, string> = { reserved: 'Reserved', active: 'Active Rentals', returned: 'Returned' };
+            const statusBadge: Record<string, string> = { reserved: 'badge-amber', active: 'badge-green', returned: 'badge-slate' };
             const col = filtered.filter((o) => o.status === status);
             return (
               <div key={status}>
@@ -175,12 +186,12 @@ export default function AdminOrdersPage() {
                     <div key={order.id} onClick={() => openDrawer(order)} className="card p-4 cursor-pointer hover:border-amber transition-all card-hover">
                       <div className="flex justify-between items-start mb-2">
                         <span className="text-xs font-currency font-semibold text-slate">{order.id}</span>
-                        {order.dueDate === 'Today' && <span className="badge-red text-[10px]">Due Today</span>}
+                        {order.late && <span className="badge-red text-[10px]">{order.daysLate}d Overdue</span>}
                       </div>
                       <p className="font-semibold text-navy text-sm">{order.customerName}</p>
                       <p className="text-slate text-xs mt-0.5 line-clamp-1">{order.item}</p>
                       <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate/10">
-                        <span className="text-xs text-slate">{order.dueDate}</span>
+                        <span className="text-xs text-slate">{fmtDate(order.startAt)} → {fmtDate(order.endAt)}</span>
                         <span className="material-symbols-outlined text-slate" style={{fontSize:'16px'}}>open_in_new</span>
                       </div>
                     </div>
@@ -209,7 +220,7 @@ export default function AdminOrdersPage() {
                   <h2 className="text-h3 text-navy">Order {selectedOrder.id}</h2>
                   <span className={badgeFor(selectedOrder).badge}>{badgeFor(selectedOrder).label}</span>
                 </div>
-                <p className="text-slate text-xs">Rental Period: {selectedOrder.pickupDate || '—'} – {selectedOrder.dueDate}</p>
+                <p className="text-slate text-xs">Rental Period: {fmtDate(selectedOrder.startAt)} – {fmtDate(selectedOrder.endAt)}</p>
               </div>
               <button onClick={closeDrawer} className="p-1.5 rounded-full hover:bg-surface-high transition-colors text-slate">
                 <span className="material-symbols-outlined" style={{fontSize:'20px'}}>close</span>
@@ -217,6 +228,10 @@ export default function AdminOrdersPage() {
             </div>
 
             <div className="flex-1 p-5 space-y-5">
+              {actionError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">{actionError}</div>
+              )}
+
               {/* Customer */}
               <section>
                 <h3 className="text-[10px] font-semibold text-slate uppercase tracking-widest mb-3">Customer Details</h3>
@@ -236,85 +251,131 @@ export default function AdminOrdersPage() {
                 <h3 className="text-[10px] font-semibold text-slate uppercase tracking-widest mb-2">Rental Item</h3>
                 <div className="bg-ivory rounded-lg border border-slate/10 p-3 flex items-center gap-3">
                   <span className="material-symbols-outlined text-slate" style={{fontSize:'20px'}}>inventory_2</span>
-                  <p className="text-navy font-medium text-sm">{selectedOrder.item}</p>
-                </div>
-              </section>
-
-              {/* Return Process */}
-              <section className="border border-slate/10 rounded-xl overflow-hidden">
-                <div className="bg-ivory px-4 py-3 border-b border-slate/10 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-navy" style={{fontSize:'18px'}}>fact_check</span>
-                  <h3 className="text-sm font-semibold text-navy">Return Process</h3>
-                </div>
-                <div className="p-4 space-y-4">
-                  {/* Checklist */}
                   <div>
-                    <p className="text-[10px] font-semibold text-slate uppercase tracking-wide mb-2">Condition Checklist</p>
-                    <div className="space-y-2.5">
-                      {checklist.map((item, i) => (
-                        <label key={i} className="flex items-start gap-2.5 cursor-pointer group">
-                          <input
-                            type="checkbox"
-                            checked={checkedItems[i]}
-                            onChange={() => toggleCheck(i)}
-                            className="mt-0.5 w-4 h-4 rounded border-slate/30 text-navy focus:ring-amber"
-                          />
-                          <span className={`text-sm transition-colors ${checkedItems[i] ? 'text-navy line-through opacity-60' : 'text-on-surface group-hover:text-amber'}`}>{item}</span>
-                        </label>
-                      ))}
-                    </div>
-                    <div className="mt-2 text-xs text-slate">{checkedItems.filter(Boolean).length} of {checklist.length} checked</div>
-                  </div>
-
-                  {/* Deposit & Late Fee */}
-                  <div className="border-t border-slate/10 pt-4">
-                    <div className="flex justify-between items-center mb-3">
-                      <span className="text-[10px] font-semibold text-slate uppercase tracking-wide">Security Deposit Held</span>
-                      <span className="font-currency font-semibold text-navy">${selectedOrder.deposit.toLocaleString()}.00</span>
-                    </div>
-                    <div className="flex justify-between items-center mb-3">
-                      <label className="text-[10px] font-semibold text-slate uppercase tracking-wide flex items-center gap-1" htmlFor="late-fee-input">
-                        Late/Damage Fee
-                        {selectedOrder.late && <span className="material-symbols-outlined text-amber" style={{fontSize:'14px'}}>warning</span>}
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate font-mono text-sm">$</span>
-                        <input
-                          id="late-fee-input"
-                          type="number"
-                          value={lateFee}
-                          onChange={(e) => setLateFee(e.target.value)}
-                          className="input-field w-28 pl-6 pr-2 py-1.5 text-right font-currency text-sm"
-                          min="0"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Refund ledger card */}
-                    <div className="ledger-card flex justify-between items-center">
-                      <span className="font-semibold text-navy text-sm">Total Refund</span>
-                      <span className="font-currency font-bold text-navy text-h3">${refund.toFixed(2)}</span>
-                    </div>
+                    <p className="text-navy font-medium text-sm">{selectedOrder.item}</p>
+                    <p className="text-slate text-xs">{selectedOrder.addonLabel} · {selectedOrder.days} days @ ₹{selectedOrder.rate}/day · total ₹{selectedOrder.total.toLocaleString()}</p>
+                    <p className="text-slate text-xs mt-0.5">
+                      Payment: {selectedOrder.paymentStatus === 'paid' ? `Razorpay · ${selectedOrder.paymentRef}` : 'Demo mode'}
+                    </p>
                   </div>
                 </div>
               </section>
+
+              {/* Reserved: pickup / cancel */}
+              {selectedOrder.status === 'reserved' && (
+                <section className="border border-slate/10 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-navy" style={{fontSize:'18px'}}>event_upcoming</span>
+                    <h3 className="text-sm font-semibold text-navy">Reservation</h3>
+                  </div>
+                  <p className="text-xs text-slate">Pickup scheduled for {fmtDate(selectedOrder.startAt)}. Mark as picked up when the customer collects the item.</p>
+                </section>
+              )}
+
+              {/* Active: return process */}
+              {selectedOrder.status === 'active' && (
+                <section className="border border-slate/10 rounded-xl overflow-hidden">
+                  <div className="bg-ivory px-4 py-3 border-b border-slate/10 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-navy" style={{fontSize:'18px'}}>fact_check</span>
+                    <h3 className="text-sm font-semibold text-navy">Return Process</h3>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    {/* Checklist */}
+                    <div>
+                      <p className="text-[10px] font-semibold text-slate uppercase tracking-wide mb-2">Condition Checklist</p>
+                      <div className="space-y-2.5">
+                        {checklist.map((item, i) => (
+                          <label key={i} className="flex items-start gap-2.5 cursor-pointer group">
+                            <input
+                              type="checkbox"
+                              checked={checkedItems[i]}
+                              onChange={() => toggleCheck(i)}
+                              className="mt-0.5 w-4 h-4 rounded border-slate/30 text-navy focus:ring-amber"
+                            />
+                            <span className={`text-sm transition-colors ${checkedItems[i] ? 'text-navy line-through opacity-60' : 'text-on-surface group-hover:text-amber'}`}>{item}</span>
+                          </label>
+                        ))}
+                      </div>
+                      <div className="mt-2 text-xs text-slate">{checkedItems.filter(Boolean).length} of {checklist.length} checked</div>
+                    </div>
+
+                    {/* Deposit & Late Fee */}
+                    <div className="border-t border-slate/10 pt-4">
+                      <div className="flex justify-between items-center mb-3">
+                        <span className="text-[10px] font-semibold text-slate uppercase tracking-wide">Security Deposit Held</span>
+                        <span className="font-currency font-semibold text-navy">₹{selectedOrder.deposit.toLocaleString()}.00</span>
+                      </div>
+                      <div className="flex justify-between items-center mb-3">
+                        <label className="text-[10px] font-semibold text-slate uppercase tracking-wide flex items-center gap-1" htmlFor="late-fee-input">
+                          Late/Damage Fee
+                          {selectedOrder.late && <span className="material-symbols-outlined text-amber" style={{fontSize:'14px'}}>warning</span>}
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate font-mono text-sm">₹</span>
+                          <input
+                            id="late-fee-input"
+                            type="number"
+                            value={lateFee}
+                            onChange={(e) => setLateFee(e.target.value)}
+                            className="input-field w-28 pl-6 pr-2 py-1.5 text-right font-currency text-sm"
+                            min="0"
+                            max={selectedOrder.deposit}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Refund ledger card */}
+                      <div className="ledger-card flex justify-between items-center">
+                        <span className="font-semibold text-navy text-sm">Deposit Refund</span>
+                        <span className="font-currency font-bold text-navy text-h3">₹{refund.toFixed(2)}</span>
+                      </div>
+                      {(parseFloat(lateFee) || 0) > selectedOrder.deposit && (
+                        <p className="text-red-600 text-xs mt-2">Fee cannot exceed the held deposit.</p>
+                      )}
+                    </div>
+                  </div>
+                </section>
+              )}
+
+              {/* Returned summary */}
+              {selectedOrder.status === 'returned' && (
+                <section className="border border-slate/10 rounded-xl p-4 space-y-2 text-sm">
+                  <div className="flex justify-between"><span className="text-slate">Returned on</span><span className="text-navy font-medium">{fmtDate(selectedOrder.returnedAt)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate">Late/Damage fee</span><span className="text-navy font-medium">₹{selectedOrder.lateFee.toLocaleString()}</span></div>
+                  <div className="flex justify-between"><span className="text-slate">Deposit refunded</span><span className="text-emerald-600 font-semibold">₹{selectedOrder.refund.toLocaleString()}</span></div>
+                </section>
+              )}
             </div>
 
             {/* Drawer Footer */}
             <div className="p-5 border-t border-slate/10 sticky bottom-0 bg-white flex gap-3">
-              <button onClick={closeDrawer} className="btn-secondary flex-1 py-2.5">Cancel</button>
-              <button
-                onClick={processReturn}
-                disabled={processing || selectedOrder.status === 'returned'}
-                className="btn-primary flex-1 py-2.5"
-              >
-                {processing
-                  ? <><span className="material-symbols-outlined animate-spin" style={{fontSize:'18px'}}>refresh</span>Processing...</>
-                  : selectedOrder.status === 'returned'
-                  ? 'Returned ✓'
-                  : 'Process Return'
-                }
-              </button>
+              {selectedOrder.status === 'reserved' && (
+                <>
+                  <button onClick={() => runAction('cancel')} disabled={processing} className="btn-secondary flex-1 py-2.5">Cancel Order</button>
+                  <button onClick={() => runAction('pickup')} disabled={processing} className="btn-primary flex-1 py-2.5">
+                    {processing ? 'Saving…' : 'Mark Picked Up'}
+                  </button>
+                </>
+              )}
+              {selectedOrder.status === 'active' && (
+                <>
+                  <button onClick={closeDrawer} className="btn-secondary flex-1 py-2.5">Close</button>
+                  <button
+                    onClick={() => runAction('return')}
+                    disabled={processing || !allChecked}
+                    title={allChecked ? '' : 'Complete the condition checklist first'}
+                    className="btn-primary flex-1 py-2.5 disabled:opacity-40"
+                  >
+                    {processing
+                      ? <><span className="material-symbols-outlined animate-spin" style={{fontSize:'18px'}}>refresh</span>Processing...</>
+                      : 'Process Return'
+                    }
+                  </button>
+                </>
+              )}
+              {(selectedOrder.status === 'returned' || selectedOrder.status === 'cancelled') && (
+                <button onClick={closeDrawer} className="btn-secondary flex-1 py-2.5">Close</button>
+              )}
             </div>
           </>
         )}

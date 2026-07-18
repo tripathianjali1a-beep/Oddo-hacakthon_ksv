@@ -1,15 +1,15 @@
 import PageHero from '@/components/ui/PageHero';
 
 const releases = [
-  { date: 'Jun 2024', title: 'LuxRent surpasses 1,200 active listings across 42 cities', tag: 'Company' },
+  { date: 'Jun 2024', title: 'Rentora surpasses 1,200 active listings across 42 cities', tag: 'Company' },
   { date: 'Apr 2024', title: 'Introducing 24/7 concierge support for every rental', tag: 'Product' },
-  { date: 'Feb 2024', title: 'LuxRent raises Series B to expand global equipment marketplace', tag: 'Funding' },
-  { date: 'Nov 2023', title: 'The LuxRent Standard: our new certification programme for owners', tag: 'Trust' },
+  { date: 'Feb 2024', title: 'Rentora raises Series B to expand global equipment marketplace', tag: 'Funding' },
+  { date: 'Nov 2023', title: 'The Rentora Standard: our new certification programme for owners', tag: 'Trust' },
 ];
 
 const coverage = [
   { outlet: 'The Verge', quote: '“The most polished rental experience we’ve tested.”' },
-  { outlet: 'Forbes', quote: '“LuxRent is quietly redefining premium access.”' },
+  { outlet: 'Forbes', quote: '“Rentora is quietly redefining premium access.”' },
   { outlet: 'TechCrunch', quote: '“Concierge-grade service, marketplace scale.”' },
 ];
 

@@ -2,10 +2,10 @@ import Link from 'next/link';
 import PageHero from '@/components/ui/PageHero';
 
 const steps = [
-  { icon: 'search', title: 'Discover', desc: 'Browse a curated catalogue of premium homes and equipment. Filter by category, dates, and budget to find your perfect match.' },
-  { icon: 'event_available', title: 'Book instantly', desc: 'Pick your rental period, add any options, and check availability in real time. Secure checkout with a fully refundable deposit.' },
-  { icon: 'local_shipping', title: 'Pickup or delivery', desc: 'Collect from our depot or have it delivered straight to your site. Everything arrives inspected and ready to go.' },
-  { icon: 'task_alt', title: 'Enjoy & return', desc: 'Use it worry-free with 24/7 support and full damage cover. Return it, and your deposit is released automatically.' },
+  { icon: 'search', title: 'Discover', desc: 'Browse a curated fleet of heavy machinery, power tools, and studio gear. Filter by category, dates, and budget to find the right unit.' },
+  { icon: 'event_available', title: 'Book instantly', desc: 'Pick your rental period, add any attachments, and check live availability. Secure checkout with a fully refundable deposit.' },
+  { icon: 'local_shipping', title: 'Pickup or delivery', desc: 'Collect from our depot or have it delivered straight to your site. Everything arrives inspected, fuelled and ready to work.' },
+  { icon: 'task_alt', title: 'Use & return', desc: 'Run the job worry-free with 24/7 support and full damage cover. Return it, and your deposit is released automatically.' },
 ];
 
 const forOwners = [
@@ -19,8 +19,8 @@ export default function HowItWorksPage() {
     <div className="pb-16">
       <PageHero
         eyebrow="How it works"
-        title="From search to stay in four steps"
-        subtitle="Renting with LuxRent is designed to be effortless. Here's exactly how it works."
+        title="From search to job site in four steps"
+        subtitle="Renting with Rentora is designed to be effortless. Here's exactly how it works."
         icon="bolt"
         crumbs={[{ label: 'Home', href: '/home' }, { label: 'How it works' }]}
       />
@@ -47,8 +47,8 @@ export default function HowItWorksPage() {
           <div className="absolute -top-16 -right-10 w-72 h-72 rounded-full bg-amber/20 blur-[100px]" />
           <div className="relative">
             <p className="text-amber text-xs font-semibold uppercase tracking-widest mb-2">For owners</p>
-            <h2 className="text-white font-bold text-2xl md:text-3xl">Have something to rent out?</h2>
-            <p className="text-white/70 text-sm mt-3 max-w-[36rem]">Turn your property or equipment into premium income. We handle bookings, payments, and support so you don&apos;t have to.</p>
+            <h2 className="text-white font-bold text-2xl md:text-3xl">Have equipment to rent out?</h2>
+            <p className="text-white/70 text-sm mt-3 max-w-[36rem]">Turn idle machinery into steady income. We handle bookings, payments, and support so you don&apos;t have to.</p>
             <div className="grid sm:grid-cols-3 gap-4 mt-8">
               {forOwners.map((o) => (
                 <div key={o.title} className="rounded-2xl bg-white/[0.06] border border-white/10 p-5">

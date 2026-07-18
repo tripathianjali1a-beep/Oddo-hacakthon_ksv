@@ -24,13 +24,13 @@ export default function AdminProductsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selected, setSelected] = useState<number[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newProduct, setNewProduct] = useState({ name: '', brand: '', sku: '', category: 'Furniture', rate: '', status: 'available' });
+  const [newProduct, setNewProduct] = useState({ name: '', brand: '', sku: '', category: 'Furniture', rate: '', deposit: '', quantity: '1', status: 'available' });
   const [page, setPage] = useState(1);
   const PER_PAGE = 5;
 
   const load = useCallback(() => {
     setLoading(true);
-    fetch('/api/products')
+    fetch('/api/products?all=1')
       .then((r) => r.json())
       .then((data: Product[]) => setProducts(data))
       .catch(() => setProducts([]))
@@ -71,11 +71,12 @@ export default function AdminProductsPage() {
         category: newProduct.category,
         status: newProduct.status,
         daily: parseFloat(newProduct.rate) || 0,
-        monthly: (parseFloat(newProduct.rate) || 0) * 26,
+        deposit: parseFloat(newProduct.deposit) || 0,
+        quantity: parseInt(newProduct.quantity) || 1,
       }),
     });
     setSaving(false);
-    setNewProduct({ name: '', brand: '', sku: '', category: 'Furniture', rate: '', status: 'available' });
+    setNewProduct({ name: '', brand: '', sku: '', category: 'Furniture', rate: '', deposit: '', quantity: '1', status: 'available' });
     setShowAddModal(false);
     load();
   };
@@ -183,7 +184,7 @@ export default function AdminProductsPage() {
                     <td className="table-cell hidden md:table-cell">
                       <span className="px-2 py-0.5 rounded bg-surface-container text-[11px] text-navy">{product.category}</span>
                     </td>
-                    <td className="table-cell text-right font-currency font-medium text-navy">${product.daily.toLocaleString()}/day</td>
+                    <td className="table-cell text-right font-currency font-medium text-navy">₹{product.daily.toLocaleString()}/day</td>
                     <td className="table-cell text-center"><span className={statusBadge(product.status)}>{statusLabel(product.status)}</span></td>
                     <td className="table-cell opacity-0 group-hover:opacity-100 transition-opacity">
                       <button className="text-slate hover:text-amber transition-colors">
@@ -293,8 +294,18 @@ export default function AdminProductsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate uppercase tracking-wide mb-1.5">Daily Rate ($)</label>
+                  <label className="block text-xs font-semibold text-slate uppercase tracking-wide mb-1.5">Daily Rate (₹)</label>
                   <input type="number" value={newProduct.rate} onChange={(e) => setNewProduct({ ...newProduct, rate: e.target.value })} className="input-field text-sm" placeholder="0.00" min="0" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate uppercase tracking-wide mb-1.5">Deposit (₹)</label>
+                  <input type="number" value={newProduct.deposit} onChange={(e) => setNewProduct({ ...newProduct, deposit: e.target.value })} className="input-field text-sm" placeholder="0.00" min="0" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate uppercase tracking-wide mb-1.5">Units Owned</label>
+                  <input type="number" value={newProduct.quantity} onChange={(e) => setNewProduct({ ...newProduct, quantity: e.target.value })} className="input-field text-sm" placeholder="1" min="1" />
                 </div>
               </div>
               <div>

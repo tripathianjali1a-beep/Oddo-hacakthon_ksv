@@ -97,7 +97,7 @@ export default function SupportPage() {
                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chat</span>
                 Contact support
               </Link>
-              <a href="tel:+18005550199" className="btn-secondary px-6 py-3 border-white/30 hover:bg-white/10" style={{ color: '#fff' }}>
+              <a href="tel:+18005550199" className="btn-outline-light px-6 py-3">
                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>call</span>
                 +1 (800) 555-0199
               </a>

@@ -1,39 +1,72 @@
 'use client';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCart, removeFromCart, type CartItem } from '@/lib/cart';
+import type { Quote } from '@/lib/types';
+
+const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
 export default function CartPage() {
   const router = useRouter();
   const [items, setItems] = useState<CartItem[]>([]);
+  const [quote, setQuote] = useState<Quote | null>(null);
+  const [quoteError, setQuoteError] = useState('');
   const [promoCode, setPromoCode] = useState('');
-  const [promoApplied, setPromoApplied] = useState(false);
+  const [appliedCode, setAppliedCode] = useState('');
   const [promoError, setPromoError] = useState('');
 
   useEffect(() => {
     setItems(getCart());
+    const saved = localStorage.getItem('luxrent.promo') || '';
+    if (saved) { setPromoCode(saved); setAppliedCode(saved); }
     const sync = () => setItems(getCart());
     window.addEventListener('cart:changed', sync);
     return () => window.removeEventListener('cart:changed', sync);
   }, []);
 
-  const removeItem = (key: string) => { removeFromCart(key); setItems(getCart()); };
+  // All prices come from the server — the cart never computes money locally.
+  const fetchQuote = useCallback(async (cartItems: CartItem[], code: string) => {
+    if (cartItems.length === 0) { setQuote(null); return; }
+    try {
+      const res = await fetch('/api/quotes', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          lines: cartItems.map((i) => ({ productId: i.productId, attachmentId: i.attachmentId, startAt: i.startAt, endAt: i.endAt })),
+          promoCode: code,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setQuote(null); setQuoteError(data.error || 'Could not price your cart.'); return; }
+      setQuoteError('');
+      setQuote(data as Quote);
+      // Persist a valid promo so checkout re-applies it server-side.
+      if ((data as Quote).promoValid) {
+        localStorage.setItem('luxrent.promo', (data as Quote).promoCode);
+      } else {
+        localStorage.removeItem('luxrent.promo');
+        if (code) {
+          setPromoError('Invalid promo code. Try RENTORA10.');
+          setAppliedCode('');
+        }
+      }
+    } catch {
+      setQuoteError('Network error while pricing your cart.');
+    }
+  }, []);
 
-  const subtotal = items.reduce((sum, item) => sum + item.rate * item.days, 0);
-  const depositTotal = items.reduce((sum, item) => sum + item.deposit, 0);
-  const fees = Math.round(subtotal * 0.08);
-  const discount = promoApplied ? Math.round(subtotal * 0.1) : 0;
-  const total = subtotal + fees + depositTotal - discount;
+  useEffect(() => { fetchQuote(items, appliedCode); }, [items, appliedCode, fetchQuote]);
+
+  const removeItem = (key: string) => { removeFromCart(key); setItems(getCart()); };
 
   const applyPromo = () => {
     setPromoError('');
-    if (promoCode.toUpperCase() === 'LUXRENT10') {
-      setPromoApplied(true);
-    } else {
-      setPromoError('Invalid promo code. Try LUXRENT10.');
-    }
+    setAppliedCode(promoCode.trim());
   };
+
+  const promoApplied = !!quote?.promoValid;
+  const hasUnavailable = !!quote?.lines.some((l) => !l.available);
 
   return (
     <div className="max-w-[1440px] mx-auto px-6 py-8">
@@ -57,16 +90,21 @@ export default function CartPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
-            {items.map((item) => (
-              <div key={item.key} className="card p-5 flex gap-4">
+            {quoteError && (
+              <div className="card p-4 border border-red-200 bg-red-50 text-red-700 text-sm">{quoteError}</div>
+            )}
+            {items.map((item, idx) => {
+              const line = quote?.lines[idx];
+              return (
+              <div key={item.key} className={`card p-5 flex gap-4 ${line && !line.available ? 'border border-red-300' : ''}`}>
                 <div className="w-24 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-surface-high">
                   <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="font-semibold text-navy text-sm">{item.title}</h3>
-                      <p className="text-slate text-xs mt-0.5">{item.attachment}</p>
+                      <h3 className="font-semibold text-navy text-sm">{line?.item ?? item.title}</h3>
+                      <p className="text-slate text-xs mt-0.5">{line?.attachmentLabel ?? item.attachmentLabel}</p>
                     </div>
                     <button onClick={() => removeItem(item.key)} className="text-slate hover:text-red-500 transition-colors p-1">
                       <span className="material-symbols-outlined" style={{fontSize:'18px'}}>close</span>
@@ -75,17 +113,21 @@ export default function CartPage() {
                   <div className="flex items-center gap-4 mt-3 flex-wrap">
                     <div className="flex items-center gap-1 text-xs text-slate">
                       <span className="material-symbols-outlined" style={{fontSize:'14px'}}>calendar_today</span>
-                      {item.pickup} → {item.returnDate}
+                      {fmtDate(item.startAt)} → {fmtDate(item.endAt)}
                     </div>
-                    <span className="badge-navy text-[10px]">{item.days} days</span>
+                    {line && <span className="badge-navy text-[10px]">{line.days} days</span>}
+                    {line && !line.available && (
+                      <span className="badge-red text-[10px]">No longer available for these dates</span>
+                    )}
                   </div>
                   <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate/10">
-                    <span className="text-xs text-slate">${item.rate}/day × {item.days} days</span>
-                    <span className="font-bold text-navy font-currency">${(item.rate * item.days).toLocaleString()}</span>
+                    <span className="text-xs text-slate">{line ? `₹${line.rate}/day × ${line.days} days` : 'Pricing…'}</span>
+                    <span className="font-bold text-navy font-currency">{line ? `₹${line.subtotal.toLocaleString()}` : '—'}</span>
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
 
             {/* Promo Code */}
             <div className="card p-5">
@@ -93,9 +135,9 @@ export default function CartPage() {
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Enter code (try LUXRENT10)"
+                  placeholder="Enter code (try RENTORA10)"
                   value={promoCode}
-                  onChange={(e) => { setPromoCode(e.target.value); setPromoError(''); setPromoApplied(false); }}
+                  onChange={(e) => { setPromoCode(e.target.value); setPromoError(''); }}
                   className="input-field text-sm flex-1"
                   disabled={promoApplied}
                 />
@@ -104,7 +146,7 @@ export default function CartPage() {
                 </button>
               </div>
               {promoError && <p className="text-red-500 text-xs mt-2">{promoError}</p>}
-              {promoApplied && <p className="text-emerald-600 text-xs mt-2 flex items-center gap-1"><span className="material-symbols-outlined" style={{fontSize:'14px'}}>check_circle</span>10% discount applied!</p>}
+              {promoApplied && <p className="text-emerald-600 text-xs mt-2 flex items-center gap-1"><span className="material-symbols-outlined" style={{fontSize:'14px'}}>check_circle</span>Discount applied!</p>}
             </div>
           </div>
 
@@ -115,33 +157,46 @@ export default function CartPage() {
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-slate">Subtotal</span>
-                  <span className="font-currency text-navy">${subtotal.toLocaleString()}</span>
+                  <span className="font-currency text-navy">{quote ? `₹${quote.subtotal.toLocaleString()}` : '—'}</span>
                 </div>
-                {promoApplied && (
+                <div className="flex justify-between">
+                  <span className="text-slate">Damage Waiver</span>
+                  <span className="font-currency text-navy">{quote ? `₹${quote.waiver.toLocaleString()}` : '—'}</span>
+                </div>
+                {quote && quote.discount > 0 && (
                   <div className="flex justify-between text-emerald-600">
-                    <span>Promo (LUXRENT10)</span>
-                    <span>−${discount.toLocaleString()}</span>
+                    <span>Promo ({quote.promoCode})</span>
+                    <span>−₹{quote.discount.toLocaleString()}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span className="text-slate">Taxes & Fees (8%)</span>
-                  <span className="font-currency text-navy">${fees.toLocaleString()}</span>
+                  <span className="font-currency text-navy">{quote ? `₹${quote.tax.toLocaleString()}` : '—'}</span>
                 </div>
                 <div className="ledger-card flex justify-between items-center">
                   <div className="flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-navy" style={{fontSize:'16px'}}>security</span>
                     <span className="text-xs font-semibold text-navy">Security Deposits</span>
                   </div>
-                  <span className="font-currency font-semibold text-navy">${depositTotal.toLocaleString()}</span>
+                  <span className="font-currency font-semibold text-navy">{quote ? `₹${quote.depositTotal.toLocaleString()}` : '—'}</span>
                 </div>
                 <p className="text-[11px] text-slate">Deposits are fully refundable on safe return.</p>
                 <div className="flex justify-between items-end pt-3 border-t-2 border-navy mt-1">
                   <span className="font-semibold text-navy">Total Due</span>
-                  <span className="text-h2 text-navy font-currency">${total.toLocaleString()}</span>
+                  <span className="text-h2 text-navy font-currency">{quote ? `₹${quote.total.toLocaleString()}` : '—'}</span>
                 </div>
               </div>
 
-              <Link href="/checkout" className="btn-primary w-full py-3 mt-5 text-sm">
+              {hasUnavailable && (
+                <p className="text-red-600 text-xs mt-4">
+                  Some items are no longer available for the selected dates. Remove them or pick different dates to continue.
+                </p>
+              )}
+              <Link
+                href="/checkout"
+                aria-disabled={!quote || hasUnavailable}
+                className={`btn-primary w-full py-3 mt-5 text-sm ${!quote || hasUnavailable ? 'opacity-40 pointer-events-none' : ''}`}
+              >
                 Proceed to Checkout
                 <span className="material-symbols-outlined" style={{fontSize:'18px'}}>arrow_forward</span>
               </Link>

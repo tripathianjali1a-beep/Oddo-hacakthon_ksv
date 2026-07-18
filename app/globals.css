@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --font-inter: 'Inter', sans-serif;
+  --font-body: var(--font-sans), 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-head: var(--font-display), 'Fraunces', Georgia, serif;
 
   /* Colors */
   --color-navy: #0F172A;
@@ -42,14 +43,16 @@
   --shadow-card-hover: 0 14px 44px -12px rgba(15,23,42,0.30), 0 4px 10px rgba(15,23,42,0.06);
 }
 
-/* Typography scale (used across pages as text-display / text-h1..h3) */
-.text-display { font-size: 2.4rem; line-height: 1.08; font-weight: 800; letter-spacing: -0.03em; }
-.text-h1 { font-size: 1.8rem; line-height: 1.15; font-weight: 800; letter-spacing: -0.025em; }
-.text-h2 { font-size: 1.375rem; line-height: 1.2; font-weight: 700; letter-spacing: -0.02em; }
+/* Typography scale (used across pages as text-display / text-h1..h3).
+   Display + h1/h2 use the Fraunces editorial serif; h3 stays sans for UI density. */
+.text-display { font-family: var(--font-head); font-size: 2.6rem; line-height: 1.06; font-weight: 600; letter-spacing: -0.02em; }
+.text-h1 { font-family: var(--font-head); font-size: 1.9rem; line-height: 1.12; font-weight: 600; letter-spacing: -0.015em; }
+.text-h2 { font-family: var(--font-head); font-size: 1.45rem; line-height: 1.18; font-weight: 600; letter-spacing: -0.01em; }
 .text-h3 { font-size: 1.075rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.01em; }
+.font-display { font-family: var(--font-head); }
 @media (min-width: 768px) {
-  .text-display { font-size: 3rem; }
-  .text-h1 { font-size: 2.1rem; }
+  .text-display { font-size: 3.3rem; }
+  .text-h1 { font-size: 2.2rem; }
 }
 
 /* Base */
@@ -62,7 +65,7 @@ html {
 }
 
 body {
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--font-body);
   background-color: var(--color-ivory);
   color: var(--color-on-surface);
   -webkit-font-smoothing: antialiased;
@@ -236,6 +239,26 @@ body {
 .btn-secondary:hover { border-color: #0F172A; background-color: rgba(15, 23, 42, 0.04); transform: translateY(-1px); }
 .btn-secondary:active { transform: scale(0.98); }
 
+/* Outline button for use on dark/navy surfaces (hero overlays, dark CTA panels) */
+.btn-outline-light {
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 11px 22px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+.btn-outline-light:hover { border-color: rgba(255, 255, 255, 0.6); background-color: rgba(255, 255, 255, 0.1); transform: translateY(-1px); }
+.btn-outline-light:active { transform: scale(0.98); }
+
 .btn-ghost {
   background: transparent;
   border: none;
@@ -286,6 +309,18 @@ body {
 }
 .input-field::placeholder { color: rgba(100, 116, 139, 0.6); }
 .input-field:focus { border-color: #D97706; box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15); }
+
+/* .input-field's own `padding` shorthand can otherwise beat Tailwind's padding
+   utilities on source order alone (both are plain classes at equal specificity).
+   These two-class combinators pin the icon-clearance paddings so they always win. */
+.input-field.pl-6 { padding-left: 1.5rem; }
+.input-field.pl-7 { padding-left: 1.75rem; }
+.input-field.pl-8 { padding-left: 2rem; }
+.input-field.pl-9 { padding-left: 2.25rem; }
+.input-field.pl-10 { padding-left: 2.5rem; }
+.input-field.pr-2 { padding-right: 0.5rem; }
+.input-field.pr-9 { padding-right: 2.25rem; }
+.input-field.pr-10 { padding-right: 2.5rem; }
 
 /* Badges */
 .badge {

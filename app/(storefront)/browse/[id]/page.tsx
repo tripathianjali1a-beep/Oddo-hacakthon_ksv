@@ -12,6 +12,12 @@ const statusStyle: Record<string, { dot: string; label: string; cls: string }> =
   draft: { dot: '#64748B', label: 'Draft', cls: 'text-slate-600 bg-slate-50 border-slate-200' },
 };
 
+const toDateInput = (d: Date) => {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+const daysFromToday = (n: number) => toDateInput(new Date(Date.now() + n * 86_400_000));
+
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
@@ -19,8 +25,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [loading, setLoading] = useState(true);
   const [selectedImg, setSelectedImg] = useState(0);
   const [selectedAttachment, setSelectedAttachment] = useState('standard');
-  const [pickupDate, setPickupDate] = useState('2024-10-15');
-  const [returnDate, setReturnDate] = useState('2024-10-20');
+  const [pickupDate, setPickupDate] = useState(daysFromToday(0));
+  const [returnDate, setReturnDate] = useState(daysFromToday(5));
+  const [availability, setAvailability] = useState<{ available: boolean; availableQty: number } | null>(null);
   const [addedToCart, setAddedToCart] = useState(false);
   const [fav, setFav] = useState(false);
 
@@ -33,6 +40,18 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       })
       .finally(() => setLoading(false));
   }, [id]);
+
+  // Re-check date-based availability whenever the rental period changes.
+  useEffect(() => {
+    if (!pickupDate || !returnDate || returnDate <= pickupDate) { setAvailability(null); return; }
+    let cancelled = false;
+    setAvailability(null);
+    fetch(`/api/products/${id}/availability?from=${pickupDate}&to=${returnDate}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (!cancelled && data) setAvailability(data); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [id, pickupDate, returnDate]);
 
   if (loading) {
     return (
@@ -54,15 +73,19 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
   const gallery = product.gallery.length ? product.gallery : [product.image];
   const attachment = product.attachments.find((a) => a.id === selectedAttachment) || product.attachments[0] || { id: 'standard', label: 'Standard', price: 0 };
-  const days = Math.max(1, Math.round((new Date(returnDate).getTime() - new Date(pickupDate).getTime()) / (1000 * 60 * 60 * 24)));
+  const validDates = !!pickupDate && !!returnDate && returnDate > pickupDate;
+  const days = validDates ? Math.max(1, Math.round((new Date(returnDate).getTime() - new Date(pickupDate).getTime()) / (1000 * 60 * 60 * 24))) : 1;
   const baseRate = product.daily;
   const baseTotal = baseRate * days;
   const attachmentCost = attachment.price * days;
+  // Mirrors the server pricing engine (lib/pricing.ts): tax applies to
+  // subtotal + waiver; the authoritative number is recomputed at checkout.
   const damageWaiver = 75;
-  const taxes = Math.round((baseTotal + attachmentCost) * 0.08);
+  const taxes = Math.round((baseTotal + attachmentCost + damageWaiver) * 0.08);
   const total = baseTotal + attachmentCost + damageWaiver + taxes + product.deposit;
   const st = statusStyle[product.status] ?? statusStyle.available;
-  const isBooked = product.status === 'booked';
+  const unavailable = availability !== null && !availability.available;
+  const canAdd = validDates && availability !== null && availability.available;
 
   const rateTiles = [
     { label: 'Hourly', value: product.hourly },
@@ -71,23 +94,19 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     { label: 'Monthly', value: product.monthly },
   ].filter((r) => r.value > 0);
 
-  const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-
   const nextImg = () => setSelectedImg((i) => (i + 1) % gallery.length);
   const prevImg = () => setSelectedImg((i) => (i - 1 + gallery.length) % gallery.length);
 
   const handleAddToCart = () => {
+    if (!canAdd) return;
     addToCart({
       productId: product.id,
+      attachmentId: attachment.id,
+      startAt: pickupDate,
+      endAt: returnDate,
       title: product.name,
-      attachment: attachment.label,
-      attachmentPrice: attachment.price,
-      days,
-      rate: baseRate + attachment.price,
-      deposit: product.deposit,
+      attachmentLabel: attachment.label,
       image: product.image,
-      pickup: fmtDate(pickupDate),
-      returnDate: fmtDate(returnDate),
     });
     setAddedToCart(true);
     setTimeout(() => router.push('/cart'), 700);
@@ -178,7 +197,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 {rateTiles.map((r) => (
                   <div key={r.label} className="rounded-xl border border-slate/12 bg-ivory p-3.5 text-center">
                     <p className="text-[10px] font-semibold text-slate uppercase tracking-wide mb-1">{r.label}</p>
-                    <p className="text-navy font-bold text-lg font-currency">${r.value.toLocaleString()}</p>
+                    <p className="text-navy font-bold text-lg font-currency">₹{r.value.toLocaleString()}</p>
                   </div>
                 ))}
               </div>
@@ -263,7 +282,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 <span className="text-white/80 text-sm">{product.brand}</span>
               </div>
               <div className="mt-4 flex items-baseline gap-1 relative">
-                <span className="text-3xl font-bold font-currency">${baseRate.toLocaleString()}</span>
+                <span className="text-3xl font-bold font-currency">₹{baseRate.toLocaleString()}</span>
                 <span className="text-white/60 text-sm">/ day</span>
               </div>
             </div>
@@ -279,7 +298,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                         <input type="radio" name="attachment" value={att.id} checked={selectedAttachment === att.id} onChange={() => setSelectedAttachment(att.id)} className="sr-only peer" />
                         <div className="p-3 rounded-xl border-2 border-slate/15 peer-checked:border-amber peer-checked:bg-amber/5 transition-all text-center">
                           <p className="text-xs font-semibold text-navy">{att.label}</p>
-                          <p className="text-[11px] text-slate mt-0.5">{att.price === 0 ? 'Included' : `+$${att.price}/day`}</p>
+                          <p className="text-[11px] text-slate mt-0.5">{att.price === 0 ? 'Included' : `+₹${att.price}/day`}</p>
                         </div>
                       </label>
                     ))}
@@ -293,58 +312,72 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-xl border border-slate/15 bg-ivory px-3 py-2">
                     <span className="block text-[10px] font-semibold text-slate/60 uppercase">Pickup</span>
-                    <input type="date" value={pickupDate} onChange={(e) => setPickupDate(e.target.value)} className="w-full bg-transparent outline-none text-sm text-navy font-medium" />
+                    <input type="date" value={pickupDate} min={daysFromToday(0)} onChange={(e) => setPickupDate(e.target.value)} className="w-full bg-transparent outline-none text-sm text-navy font-medium" />
                   </div>
                   <div className="rounded-xl border border-slate/15 bg-ivory px-3 py-2">
                     <span className="block text-[10px] font-semibold text-slate/60 uppercase">Return</span>
-                    <input type="date" value={returnDate} onChange={(e) => setReturnDate(e.target.value)} className="w-full bg-transparent outline-none text-sm text-navy font-medium" />
+                    <input type="date" value={returnDate} min={pickupDate || daysFromToday(0)} onChange={(e) => setReturnDate(e.target.value)} className="w-full bg-transparent outline-none text-sm text-navy font-medium" />
                   </div>
                 </div>
-                <div className="flex items-center justify-center gap-1.5 mt-2 text-xs text-slate">
-                  <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>event</span>
-                  <strong className="text-navy">{days} day{days !== 1 ? 's' : ''}</strong> selected
-                </div>
+                {!validDates ? (
+                  <div className="flex items-center justify-center gap-1.5 mt-2 text-xs text-red-600">
+                    <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>error</span>
+                    Return date must be after pickup date
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-1.5 mt-2 text-xs text-slate">
+                    <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>event</span>
+                    <strong className="text-navy">{days} day{days !== 1 ? 's' : ''}</strong> selected
+                    {availability === null ? (
+                      <span className="text-slate/60">· checking availability…</span>
+                    ) : availability.available ? (
+                      <span className="text-emerald-600 font-medium">· {availability.availableQty} unit{availability.availableQty !== 1 ? 's' : ''} available</span>
+                    ) : (
+                      <span className="text-red-600 font-medium">· fully booked for these dates</span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Price summary */}
               <div className="rounded-xl border border-slate/12 divide-y divide-slate/10">
                 <div className="flex justify-between px-4 py-2.5 text-sm">
-                  <span className="text-slate">${baseRate}/day × {days}</span>
-                  <span className="font-currency text-navy">${baseTotal.toLocaleString()}</span>
+                  <span className="text-slate">₹{baseRate}/day × {days}</span>
+                  <span className="font-currency text-navy">₹{baseTotal.toLocaleString()}</span>
                 </div>
                 {attachment.price > 0 && (
                   <div className="flex justify-between px-4 py-2.5 text-sm">
                     <span className="text-slate">{attachment.label}</span>
-                    <span className="font-currency text-navy">+${attachmentCost.toLocaleString()}</span>
+                    <span className="font-currency text-navy">+₹{attachmentCost.toLocaleString()}</span>
                   </div>
                 )}
                 <div className="flex justify-between px-4 py-2.5 text-sm">
                   <span className="text-slate">Damage waiver</span>
-                  <span className="font-currency text-navy">${damageWaiver}</span>
+                  <span className="font-currency text-navy">₹{damageWaiver}</span>
                 </div>
                 <div className="flex justify-between px-4 py-2.5 text-sm">
                   <span className="text-slate">Taxes & fees</span>
-                  <span className="font-currency text-navy">${taxes}</span>
+                  <span className="font-currency text-navy">₹{taxes}</span>
                 </div>
                 <div className="flex justify-between items-center px-4 py-2.5 text-sm bg-ivory">
                   <span className="flex items-center gap-1.5 text-navy font-medium">
                     <span className="material-symbols-outlined text-slate" style={{ fontSize: '16px' }}>security</span>
                     Refundable deposit
                   </span>
-                  <span className="font-currency font-semibold text-navy">${product.deposit.toLocaleString()}</span>
+                  <span className="font-currency font-semibold text-navy">₹{product.deposit.toLocaleString()}</span>
                 </div>
               </div>
 
               <div className="flex justify-between items-end pt-1">
                 <div>
                   <p className="text-[11px] text-slate uppercase tracking-wide">Total due today</p>
-                  <p className="text-3xl text-navy font-bold font-currency">${total.toLocaleString()}</p>
+                  <p className="text-3xl text-navy font-bold font-currency">₹{total.toLocaleString()}</p>
                 </div>
                 <span className="text-[11px] text-slate">incl. deposit</span>
               </div>
 
-              <button onClick={handleAddToCart} disabled={addedToCart || isBooked} className="btn-primary w-full py-3.5 text-sm">
-                {isBooked ? 'Currently Booked' : addedToCart ? (
+              <button onClick={handleAddToCart} disabled={addedToCart || !canAdd} className="btn-primary w-full py-3.5 text-sm">
+                {unavailable ? 'Unavailable for These Dates' : addedToCart ? (
                   <><span className="material-symbols-outlined" style={{ fontSize: '18px', fontVariationSettings: "'FILL' 1" }}>check_circle</span>Added! Redirecting…</>
                 ) : (
                   <><span className="material-symbols-outlined" style={{ fontSize: '18px', fontVariationSettings: "'FILL' 1" }}>shopping_cart</span>Add to Cart</>
@@ -363,10 +396,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-xl border-t border-slate/15 px-4 py-3 flex items-center justify-between gap-3 shadow-[0_-8px_30px_-12px_rgba(15,23,42,0.25)]">
         <div>
           <p className="text-[10px] text-slate uppercase tracking-wide">Total · {days}d</p>
-          <p className="text-xl text-navy font-bold font-currency">${total.toLocaleString()}</p>
+          <p className="text-xl text-navy font-bold font-currency">₹{total.toLocaleString()}</p>
         </div>
-        <button onClick={handleAddToCart} disabled={addedToCart || isBooked} className="btn-primary flex-1 max-w-[220px] py-3 text-sm">
-          {isBooked ? 'Booked' : addedToCart ? 'Added ✓' : 'Add to Cart'}
+        <button onClick={handleAddToCart} disabled={addedToCart || !canAdd} className="btn-primary flex-1 max-w-[220px] py-3 text-sm">
+          {unavailable ? 'Unavailable' : addedToCart ? 'Added ✓' : 'Add to Cart'}
         </button>
       </div>
     </div>

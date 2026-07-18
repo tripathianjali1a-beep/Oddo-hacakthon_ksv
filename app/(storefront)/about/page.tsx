@@ -2,24 +2,24 @@ import Link from 'next/link';
 import PageHero from '@/components/ui/PageHero';
 
 const stats = [
-  { n: '1,248+', l: 'Active listings' },
-  { n: '42', l: 'Cities worldwide' },
-  { n: '8,500+', l: 'Verified owners' },
+  { n: '1,248+', l: 'Units in fleet' },
+  { n: '42', l: 'Depots nationwide' },
+  { n: '8,500+', l: 'Verified vendors' },
   { n: '4.9★', l: 'Average rating' },
 ];
 
 const values = [
-  { icon: 'diamond', title: 'Uncompromising quality', desc: 'Every listing is inspected and certified before it ever reaches you.' },
+  { icon: 'diamond', title: 'Uncompromising quality', desc: 'Every unit is inspected and certified before it ever reaches your site.' },
   { icon: 'handshake', title: 'Trust by default', desc: 'Transparent pricing, protected payments, and honest reviews — always.' },
   { icon: 'bolt', title: 'Effortless experience', desc: 'From search to return, we obsess over removing friction at every step.' },
-  { icon: 'public', title: 'Global, local feel', desc: 'A worldwide network delivered with the care of a neighbourhood concierge.' },
+  { icon: 'public', title: 'National, local feel', desc: 'A nationwide depot network delivered with the care of a local yard.' },
 ];
 
 const timeline = [
-  { year: '2019', text: 'LuxRent founded with a handful of premium listings in New York.' },
-  { year: '2021', text: 'Expanded into equipment rentals and launched the vendor marketplace.' },
-  { year: '2023', text: 'Reached 40+ cities and introduced 24/7 concierge support.' },
-  { year: '2024', text: 'Crossed 1,200 active listings and 8,500 verified owners worldwide.' },
+  { year: '2019', text: 'Rentora founded with a handful of excavators and generators in New York.' },
+  { year: '2021', text: 'Expanded into studio gear and furniture, and launched the vendor marketplace.' },
+  { year: '2023', text: 'Reached 40+ depots and introduced 24/7 concierge support.' },
+  { year: '2024', text: 'Crossed 1,200 active units and 8,500 verified vendors nationwide.' },
 ];
 
 export default function AboutPage() {
@@ -27,9 +27,9 @@ export default function AboutPage() {
     <div className="pb-16">
       <PageHero
         eyebrow="Our story"
-        title="Rentals, reimagined"
-        subtitle="LuxRent connects discerning renters with the world's most extraordinary homes and equipment — booked in seconds, backed by people who care."
-        icon="apartment"
+        title="Equipment rental, reimagined"
+        subtitle="Rentora connects contractors, studios and businesses with premium, inspected equipment — booked in seconds, backed by people who care."
+        icon="construction"
         crumbs={[{ label: 'Home', href: '/home' }, { label: 'About' }]}
       />
 
@@ -48,13 +48,13 @@ export default function AboutPage() {
       {/* Mission */}
       <div className="max-w-[1100px] mx-auto px-6 mt-14 grid lg:grid-cols-2 gap-6 items-center">
         <div className="card overflow-hidden h-72 lg:h-80">
-          <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=900&q=80" alt="Interior" className="w-full h-full object-cover" />
+          <img src="/images/marketing/fleet-yard.jpg" alt="Fleet of Caterpillar excavators ready for dispatch" className="w-full h-full object-cover" />
         </div>
         <div>
           <p className="text-amber text-xs font-semibold uppercase tracking-widest mb-2">Our mission</p>
           <h2 className="text-navy font-bold text-2xl md:text-3xl leading-tight">Access over ownership, without compromise</h2>
           <p className="text-slate text-sm leading-relaxed mt-4">
-            We believe the best things in life should be accessible, not just owned. Whether it&apos;s a coastal villa for the weekend or an excavator for a job site, LuxRent makes premium rentals feel effortless — with the quality, trust, and service you&apos;d expect from a five-star concierge.
+            We believe the right equipment should be accessible, not just owned. Whether it&apos;s an excavator for a job site or a camera kit for a weekend shoot, Rentora makes premium equipment rentals feel effortless — with the inspection standards, transparency, and service you&apos;d expect from a five-star concierge.
           </p>
           <Link href="/browse" className="btn-primary mt-6 inline-flex px-6 py-3">
             Explore listings

@@ -1,24 +1,31 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Rentora is a rental management platform for heavy machinery, studio gear, and premium furniture, built with [Next.js](https://nextjs.org).
 
 ## Getting Started
 
-First, run the development server:
+The fastest way to run Rentora locally — installs dependencies, scaffolds `.env.local`, and starts the dev server in one step. Pick whichever fits your OS:
+
+| Platform | Command |
+| --- | --- |
+| macOS / Linux | `./start.sh` |
+| Windows (double-click, or `cmd`) | `start.bat` |
+| Windows (PowerShell) | `./start.ps1` |
+| Any OS with Node already set up | `npm run quickstart` |
+
+Then open [http://localhost:3000](http://localhost:3000) (the script opens it for you automatically).
+
+Want a production build instead of the dev server? Use `npm run quickstart:prod`, or pass `build` to the launcher (e.g. `./start.sh build`).
+
+### Manual setup
+
+If you'd rather run the steps yourself:
 
 ```bash
+npm install
+cp .env.local.example .env.local   # optional — omit for demo-payment mode
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The SQLite database (`.data/luxrent.db`) is created and seeded automatically on first run — no separate migration step needed.
 
 ## Learn More
 

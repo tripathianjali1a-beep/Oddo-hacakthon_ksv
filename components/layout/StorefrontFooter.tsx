@@ -8,10 +8,10 @@ const columns = [
     title: 'Explore',
     links: [
       { label: 'Browse all', href: '/browse' },
-      { label: 'Luxury villas', href: '/browse?cat=villas' },
-      { label: 'Penthouses', href: '/browse?cat=penthouses' },
-      { label: 'Waterfront', href: '/browse?cat=waterfront' },
-      { label: 'Deals', href: '/browse?deals=true' },
+      { label: 'Heavy machinery', href: '/browse?cat=Heavy Machinery' },
+      { label: 'Warehouse equipment', href: '/browse?cat=Warehouse' },
+      { label: 'Power & generators', href: '/browse?cat=Power' },
+      { label: 'Electronics', href: '/browse?cat=Electronics' },
     ],
   },
   {
@@ -69,8 +69,8 @@ export default function StorefrontFooter() {
       <div className="border-b border-white/10">
         <div className="max-w-[1440px] mx-auto px-6 py-10 grid md:grid-cols-2 gap-6 items-center">
           <div>
-            <h3 className="text-white font-bold text-2xl">Get exclusive stays in your inbox</h3>
-            <p className="text-on-navy text-sm mt-1.5">Handpicked properties and members-only rates. No spam, unsubscribe anytime.</p>
+            <h3 className="text-white font-bold text-2xl">Get fleet deals in your inbox</h3>
+            <p className="text-on-navy text-sm mt-1.5">New listings, seasonal rates and member-only discounts. No spam, unsubscribe anytime.</p>
           </div>
           <form onSubmit={submit} className="flex flex-col sm:flex-row gap-3 md:justify-end">
             <div className="relative flex-1 sm:max-w-[20rem]">
@@ -96,8 +96,8 @@ export default function StorefrontFooter() {
         <div className="col-span-2 md:col-span-4 lg:col-span-4">
           <Logo size={34} light />
           <p className="text-on-navy text-sm mt-4 leading-relaxed max-w-[22rem]">
-            LuxRent is a premium rental marketplace connecting discerning travelers with the world&apos;s most
-            extraordinary homes and equipment.
+            Rentora is a premium equipment rental marketplace connecting contractors, studios and businesses with
+            inspected heavy machinery, power tools and gear — delivered to the job site.
           </p>
           <div className="flex items-center gap-2.5 mt-5">
             {socials.map((s) => (
@@ -139,7 +139,7 @@ export default function StorefrontFooter() {
             </li>
             <li className="flex items-start gap-2.5 text-on-navy">
               <span className="material-symbols-outlined text-amber mt-0.5" style={{ ...iconSym, fontSize: '18px' }}>mail</span>
-              hello@luxrent.com
+              hello@rentora.com
             </li>
             <li className="flex items-start gap-2.5 text-on-navy">
               <span className="material-symbols-outlined text-amber mt-0.5" style={{ ...iconSym, fontSize: '18px' }}>location_on</span>
@@ -152,7 +152,7 @@ export default function StorefrontFooter() {
       {/* Bottom bar */}
       <div className="border-t border-white/10">
         <div className="max-w-[1440px] mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-on-navy text-xs">© 2024 LuxRent. Premium Rental Management Platform. All rights reserved.</p>
+          <p className="text-on-navy text-xs">© 2024 Rentora. Premium Rental Management Platform. All rights reserved.</p>
           <div className="flex items-center gap-6 text-xs">
             <Link href="/legal" className="text-on-navy hover:text-white transition-colors">Terms</Link>
             <Link href="/legal" className="text-on-navy hover:text-white transition-colors">Privacy</Link>

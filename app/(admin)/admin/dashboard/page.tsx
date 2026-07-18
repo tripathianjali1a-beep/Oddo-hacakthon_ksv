@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import type { DashboardData } from '@/lib/types';
 
 const fmtMoney = (n: number) => {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`;
-  return `$${n.toLocaleString()}`;
+  if (n >= 1_000_000) return `₹${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `₹${(n / 1_000).toFixed(1)}K`;
+  return `₹${n.toLocaleString()}`;
 };
 
 export default function AdminDashboard() {
@@ -113,7 +113,7 @@ export default function AdminDashboard() {
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-ivory border-b border-slate/10">
-                    <th className="table-header">Tenant / Property</th>
+                    <th className="table-header">Customer / Item</th>
                     <th className="table-header">Amount</th>
                     <th className="table-header">Days Late</th>
                     <th className="table-header">Status</th>
@@ -127,10 +127,10 @@ export default function AdminDashboard() {
                   {overdueRentals.map((rental) => (
                     <tr key={rental.id} className="table-row">
                       <td className="table-cell">
-                        <p className="font-semibold text-navy text-sm">{rental.tenant}</p>
-                        <p className="text-slate text-xs">{rental.property}</p>
+                        <p className="font-semibold text-navy text-sm">{rental.customer}</p>
+                        <p className="text-slate text-xs">{rental.item}</p>
                       </td>
-                      <td className="table-cell font-currency font-medium text-navy">${rental.amount.toLocaleString()}.00</td>
+                      <td className="table-cell font-currency font-medium text-navy">₹{rental.amount.toLocaleString()}.00</td>
                       <td className={`table-cell font-semibold ${rental.daysLate > 30 ? 'text-red-600' : 'text-amber'}`}>{rental.daysLate} Days</td>
                       <td className="table-cell"><span className={rental.badge}>{rental.badgeLabel}</span></td>
                       <td className="table-cell text-right">
@@ -167,10 +167,10 @@ export default function AdminDashboard() {
           {/* Chart */}
           <div className="card rounded-xl p-5 h-52 flex flex-col">
             <h2 className="text-sm font-semibold text-navy mb-3">7-Day Revenue Trend</h2>
-            <div className="flex-1 border border-dashed border-slate/20 rounded-lg flex items-end px-4 pb-3 pt-4 gap-1.5 bg-ivory/50">
+            <div className="flex-1 border border-dashed border-slate/20 rounded-lg flex items-stretch px-4 pb-3 pt-4 gap-1.5 bg-ivory/50">
               {revenueTrend.map((h, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                  <div className="w-full bg-amber/20 rounded-sm hover:bg-amber/40 transition-colors" style={{ height: `${h}%` }} />
+                <div key={i} className="flex-1 flex flex-col items-center justify-end gap-1">
+                  <div className="w-full bg-amber/60 rounded-sm hover:bg-amber transition-colors" style={{ height: `${h}%` }} />
                   <span className="text-[9px] text-slate">{['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}</span>
                 </div>
               ))}
@@ -187,7 +187,7 @@ export default function AdminDashboard() {
               <div>
                 <label className="block text-[10px] font-semibold text-slate uppercase tracking-wide mb-1">Base Rent Amount</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate font-mono text-sm">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate font-mono text-sm">₹</span>
                   <input type="text" value={baseRent} onChange={(e) => setBaseRent(e.target.value)} className="input-field pl-7 font-currency text-sm" />
                 </div>
               </div>
@@ -204,7 +204,7 @@ export default function AdminDashboard() {
               <div className="pt-3 border-t border-slate/10 flex justify-between items-end">
                 <div>
                   <p className="text-[10px] font-semibold text-slate uppercase tracking-wide mb-1">Calculated Fee</p>
-                  <p className="text-h3 text-red-600 font-currency">${calculatedFee}</p>
+                  <p className="text-h3 text-red-600 font-currency">₹{calculatedFee}</p>
                 </div>
                 <button className="btn-primary text-xs py-2 px-4">Apply</button>
               </div>

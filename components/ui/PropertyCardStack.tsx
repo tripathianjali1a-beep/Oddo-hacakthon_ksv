@@ -107,7 +107,7 @@ export default function PropertyCardStack({ items, interval = 3800 }: Props) {
               </div>
               <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
                 <p className="text-white font-bold text-lg font-currency">
-                  ${item.price}
+                  ₹{item.price}
                   <span className="text-white/40 text-xs font-normal">/day</span>
                 </p>
                 <Link href={`/browse/${item.id}`} className="text-amber text-xs font-semibold link-grow" tabIndex={isFront ? 0 : -1}>

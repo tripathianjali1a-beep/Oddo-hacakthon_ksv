@@ -41,7 +41,7 @@ export default function AdminSidebar() {
             L
           </div>
           <div>
-            <p style={{ color: '#fff', fontWeight: 700, fontSize: '14px', letterSpacing: '-0.01em' }}>LuxRent Admin</p>
+            <p style={{ color: '#fff', fontWeight: 700, fontSize: '14px', letterSpacing: '-0.01em' }}>Rentora Admin</p>
             <p style={{ color: '#7C839B', fontSize: '12px' }}>Management Suite</p>
           </div>
         </div>

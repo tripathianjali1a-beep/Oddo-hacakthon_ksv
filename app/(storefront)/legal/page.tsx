@@ -9,11 +9,11 @@ const content: Record<Tab, { label: string; icon: string; sections: { h: string;
     label: 'Terms of Service',
     icon: 'gavel',
     sections: [
-      { h: '1. Acceptance of terms', p: 'By accessing or using LuxRent, you agree to be bound by these Terms of Service and all applicable laws. If you do not agree, please do not use the platform.' },
+      { h: '1. Acceptance of terms', p: 'By accessing or using Rentora, you agree to be bound by these Terms of Service and all applicable laws. If you do not agree, please do not use the platform.' },
       { h: '2. Rentals & bookings', p: 'All bookings are subject to availability and confirmation. You agree to use rented items responsibly, return them on time, and cover any damage beyond the included waiver.' },
       { h: '3. Payments & deposits', p: 'Rental fees and refundable deposits are charged at checkout. Deposits are released after the item is returned in acceptable condition, less any applicable fees.' },
       { h: '4. Cancellations', p: 'Cancellations are governed by our Cancellation Policy. Free cancellation windows and partial-refund tiers are shown before you confirm a booking.' },
-      { h: '5. Liability', p: 'LuxRent facilitates rentals between users and is not liable for indirect damages. Our total liability is limited to the amount paid for the relevant booking.' },
+      { h: '5. Liability', p: 'Rentora facilitates rentals between users and is not liable for indirect damages. Our total liability is limited to the amount paid for the relevant booking.' },
     ],
   },
   privacy: {

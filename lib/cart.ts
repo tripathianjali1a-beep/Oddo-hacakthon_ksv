@@ -1,26 +1,31 @@
 'use client';
 
 // Lightweight localStorage-backed cart, shared across storefront pages.
+// Items only identify WHAT is rented and WHEN — all prices are computed
+// server-side via POST /api/quotes, so nothing money-related lives here.
 
 export interface CartItem {
-  key: string;         // unique per line
+  key: string;             // unique per line
   productId: number;
+  attachmentId: string;
+  startAt: string;         // ISO date
+  endAt: string;           // ISO date
+  // Display-only hints (server re-derives the real values):
   title: string;
-  attachment: string;
-  attachmentPrice: number;
-  days: number;
-  rate: number;
-  deposit: number;
+  attachmentLabel: string;
   image: string;
-  pickup: string;
-  returnDate: string;
 }
 
 const KEY = 'luxrent.cart';
 
 export function getCart(): CartItem[] {
   if (typeof window === 'undefined') return [];
-  try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; }
+  try {
+    const items = JSON.parse(localStorage.getItem(KEY) || '[]');
+    if (!Array.isArray(items)) return [];
+    // Drop entries from older cart formats that can't be quoted.
+    return items.filter((i) => i && typeof i.productId === 'number' && typeof i.startAt === 'string' && typeof i.endAt === 'string');
+  } catch { return []; }
 }
 
 export function setCart(items: CartItem[]) {

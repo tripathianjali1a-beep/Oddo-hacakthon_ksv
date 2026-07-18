@@ -1,125 +1,95 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ParallaxImage from '@/components/ui/ParallaxImage';
 import Reveal from '@/components/ui/Reveal';
 import CountUp from '@/components/ui/CountUp';
 import PropertyCardStack from '@/components/ui/PropertyCardStack';
+import type { Product } from '@/lib/types';
 
-const properties = [
-  {
-    id: 1,
-    title: 'Azure Skyline Penthouse',
-    location: 'Downtown District',
-    price: 450,
-    rating: 4.9,
-    beds: 2,
-    baths: 2,
-    status: 'available',
-    tag: 'Featured',
-    img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
-  },
-  {
-    id: 2,
-    title: 'Villa Paradiso',
-    location: 'Coastal Cliffs',
-    price: 850,
-    rating: 5.0,
-    beds: 4,
-    baths: 3,
-    status: 'available',
-    tag: 'Luxury',
-    img: 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=800&q=80',
-  },
-  {
-    id: 3,
-    title: 'Urban Industrial Loft',
-    location: 'Arts District',
-    price: 320,
-    rating: 4.7,
-    beds: 1,
-    baths: 1,
-    status: 'available',
-    tag: 'New',
-    img: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80',
-  },
-  {
-    id: 4,
-    title: 'Timberline Retreat',
-    location: 'Alpine Valley',
-    price: 550,
-    rating: 4.8,
-    beds: 3,
-    baths: 2,
-    status: 'available',
-    tag: 'Popular',
-    img: 'https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80',
-  },
-  {
-    id: 5,
-    title: 'Harbour View Suite',
-    location: 'Marina Bay',
-    price: 720,
-    rating: 4.7,
-    beds: 2,
-    baths: 2,
-    status: 'available',
-    tag: 'Waterfront',
-    img: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80',
-  },
-  {
-    id: 6,
-    title: 'Garden Cottage',
-    location: 'Hillside Park',
-    price: 280,
-    rating: 4.6,
-    beds: 1,
-    baths: 1,
-    status: 'available',
-    tag: '',
-    img: 'https://images.unsplash.com/photo-1449844908441-8829872d2607?w=800&q=80',
-  },
-];
-
+// Category tiles reuse the exact photos of the machines we actually stock,
+// so every image on the page maps to something rentable.
 const categories = [
-  { name: 'Luxury Villas', icon: 'villa', img: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=500&q=80' },
-  { name: 'Penthouses', icon: 'apartment', img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=500&q=80' },
-  { name: 'Corporate', icon: 'business', img: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=500&q=80' },
-  { name: 'Cabins', icon: 'cabin', img: 'https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?w=500&q=80' },
-  { name: 'Waterfront', icon: 'sailing', img: 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=500&q=80' },
+  { name: 'Heavy Machinery', icon: 'front_loader', img: '/images/products/cat-320-excavator.jpg' },
+  { name: 'Warehouse', icon: 'forklift', img: '/images/products/toyota-forklift.jpg' },
+  { name: 'Power', icon: 'bolt', img: '/images/products/generator-caterpillar.jpg' },
+  { name: 'Scaffolding', icon: 'construction', img: '/images/products/genie-scissor-lift.jpg' },
+  { name: 'Electronics', icon: 'photo_camera', img: '/images/products/sony-a7r-iv.jpg' },
 ];
 
 const features = [
-  { icon: 'verified', title: 'Verified Listings', desc: 'Every property is inspected and certified by our team before it goes live.' },
-  { icon: 'bolt', title: 'Instant Booking', desc: 'Reserve in seconds with real-time availability and secure checkout.' },
-  { icon: 'shield_lock', title: 'Protected Payments', desc: 'Bank-grade encryption and full refund protection on every stay.' },
-  { icon: 'support_agent', title: '24/7 Concierge', desc: 'A dedicated team is one tap away, any time of day, anywhere you are.' },
+  { icon: 'verified', title: 'Inspected Fleet', desc: 'Every unit is serviced to OEM spec and photographed before each dispatch.' },
+  { icon: 'event_available', title: 'Live Availability', desc: 'Real calendars per unit — if you can book it, it will be in the yard.' },
+  { icon: 'shield_lock', title: 'Secure Deposits', desc: 'Razorpay-backed payments with transparent, fully refundable deposits.' },
+  { icon: 'local_shipping', title: 'Site Delivery', desc: 'Doorstep or depot — flatbed delivery to your site with certified operators.' },
 ];
 
-const marqueeItems = ['New York', 'Dubai', 'Paris', 'Tokyo', 'London', 'Singapore', 'Sydney', 'Los Angeles'];
+const marqueeBrands = ['Caterpillar', 'JCB', 'Genie', 'Toyota', 'Komatsu', 'Sony', 'Herman Miller'];
+
+// Confirmation banner shown after a successful checkout (/home?ordered=1).
+function OrderConfirmedBanner() {
+  const searchParams = useSearchParams();
+  const [dismissed, setDismissed] = useState(false);
+  if (dismissed || searchParams.get('ordered') !== '1') return null;
+  return (
+    <div className="mx-3 sm:mx-5 mt-3 rounded-2xl border border-emerald-300 bg-emerald-50 px-5 py-4 flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
+        <span className="material-symbols-outlined text-emerald-600" style={{ fontSize: '28px', fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+        <div>
+          <p className="text-navy font-semibold text-sm">Order placed successfully!</p>
+          <p className="text-slate text-xs">Your reservation is confirmed — we&apos;ve emailed the details. Deposits are refunded on safe return.</p>
+        </div>
+      </div>
+      <button onClick={() => setDismissed(true)} className="text-slate hover:text-navy p-1" aria-label="Dismiss">
+        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>close</span>
+      </button>
+    </div>
+  );
+}
 
 export default function HomePage() {
-  const [favorites, setFavorites] = useState<number[]>([]);
+  const router = useRouter();
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCat, setActiveCat] = useState('All');
 
-  const toggleFavorite = (id: number) => {
-    setFavorites((prev) => (prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]));
+  // The homepage sells what the catalog actually stocks.
+  useEffect(() => {
+    fetch('/api/products')
+      .then((r) => r.json())
+      .then((data: Product[]) => setProducts(data))
+      .catch(() => setProducts([]));
+  }, []);
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    router.push(searchQuery.trim() ? `/browse?search=${encodeURIComponent(searchQuery.trim())}` : '/browse');
   };
 
-  const filtered = properties.filter((p) => {
+  const stackItems = [...products]
+    .sort((a, b) => b.daily - a.daily)
+    .slice(0, 5)
+    .map((p) => ({ id: p.id, title: p.name, location: p.category, price: p.daily, rating: p.rating, tag: p.brand, img: p.image }));
+
+  const featured = products.filter((p) => {
     const q = searchQuery.toLowerCase();
-    return p.title.toLowerCase().includes(q) || p.location.toLowerCase().includes(q);
-  });
+    return p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q) || p.category.toLowerCase().includes(q);
+  }).slice(0, 6);
+
+  const categoryCount = new Set(products.map((p) => p.category)).size;
+  const unitCount = products.reduce((s, p) => s + p.quantity, 0);
 
   return (
     <div className="overflow-x-hidden">
+      <Suspense>
+        <OrderConfirmedBanner />
+      </Suspense>
       {/* ══════════════ HERO ══════════════ */}
       <section className="detach detach-dark relative min-h-[86vh] flex items-center overflow-hidden bg-navy rounded-[28px] mx-3 sm:mx-5 mt-2 shadow-[0_24px_60px_-20px_rgba(15,23,42,0.45)]">
-        {/* Parallax backdrop */}
+        {/* Parallax backdrop — tower crane silhouetted against a dusk sky */}
         <ParallaxImage
-          src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1600&q=80"
-          alt="Luxury interior"
+          src="/images/marketing/hero-crane-sunset.jpg"
+          alt="Construction crane silhouetted at dusk"
           speed={0.3}
           fill
         />
@@ -137,31 +107,32 @@ export default function HomePage() {
             <Reveal>
               <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur border border-white/15 text-white/90 text-xs font-semibold uppercase tracking-widest">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber animate-pulse" />
-                Premium Rentals Worldwide
+                Equipment Rentals, Done Right
               </span>
             </Reveal>
 
             <Reveal delay={100}>
-              <h1 className="mt-6 text-white font-bold leading-[1.05] tracking-tight text-5xl md:text-7xl">
-                Elevate
+              <h1 className="mt-6 text-white leading-[1.04] tracking-tight text-5xl md:text-7xl font-display font-semibold">
+                Heavy iron to
                 <br />
-                Your{' '}
+                studio{' '}
                 <span className="bg-gradient-to-r from-amber via-orange-400 to-amber bg-clip-text text-transparent animate-gradient">
-                  Every Stay
+                  gear.
                 </span>
               </h1>
             </Reveal>
 
             <Reveal delay={200}>
               <p className="mt-6 text-white/70 text-base md:text-lg max-w-[36rem] leading-relaxed">
-                A handpicked collection of the world&apos;s most extraordinary homes and premium
-                equipment — booked in seconds, enjoyed for a lifetime.
+                Excavators, forklifts, generators, cameras — inspected, insured and
+                delivered to your site. Book by the day with live availability and
+                fully refundable deposits.
               </p>
             </Reveal>
 
             {/* Glass search */}
             <Reveal delay={300}>
-              <div className="mt-8 flex flex-col sm:flex-row gap-3 max-w-[36rem]">
+              <form onSubmit={submitSearch} className="mt-8 flex flex-col sm:flex-row gap-3 max-w-[36rem]">
                 <div className="relative flex-1 group">
                   <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/50" style={{ fontSize: '20px' }}>
                     search
@@ -170,24 +141,24 @@ export default function HomePage() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search a city, villa, or vibe…"
+                    placeholder="Search an excavator, lift, or camera…"
                     className="w-full pl-12 pr-4 py-4 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-white/50 outline-none focus:border-amber focus:bg-white/15 transition-all"
                   />
                 </div>
-                <Link href="/browse" className="btn-primary text-base py-4 px-8 rounded-xl shadow-lg shadow-amber/30">
+                <button type="submit" className="btn-primary text-base py-4 px-8 rounded-xl shadow-lg shadow-amber/30">
                   Explore
                   <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>arrow_forward</span>
-                </Link>
-              </div>
+                </button>
+              </form>
             </Reveal>
 
             {/* Inline trust */}
             <Reveal delay={400}>
               <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
                 {[
-                  { n: 1248, s: '+', l: 'Listings' },
-                  { n: 42, s: '', l: 'Cities' },
-                  { n: 4.9, s: '★', l: 'Avg Rating', d: 1 },
+                  { n: Math.max(unitCount, 1), s: '+', l: 'Units in fleet' },
+                  { n: Math.max(categoryCount, 1), s: '', l: 'Categories' },
+                  { n: 4.8, s: '★', l: 'Avg Rating', d: 1 },
                 ].map((t) => (
                   <div key={t.l}>
                     <p className="text-white text-2xl font-bold">
@@ -200,11 +171,11 @@ export default function HomePage() {
             </Reveal>
           </div>
 
-          {/* Auto-rotating property card stack */}
+          {/* Auto-rotating equipment card stack */}
           <div className="lg:col-span-5 hidden lg:flex justify-end">
             <Reveal variant="scale" delay={300}>
               <div className="animate-float">
-                <PropertyCardStack items={properties.slice(0, 5)} />
+                {stackItems.length > 0 && <PropertyCardStack items={stackItems} />}
               </div>
             </Reveal>
           </div>
@@ -217,12 +188,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ══════════════ MARQUEE STRIP ══════════════ */}
+      {/* ══════════════ BRAND MARQUEE ══════════════ */}
       <div className="detach detach-dark bg-navy-container rounded-2xl mx-3 sm:mx-5 my-4 py-4 overflow-hidden shadow-[0_16px_40px_-16px_rgba(15,23,42,0.4)] border border-white/5">
         <div className="flex whitespace-nowrap animate-marquee">
-          {[...marqueeItems, ...marqueeItems].map((item, i) => (
+          {[...marqueeBrands, ...marqueeBrands].map((item, i) => (
             <span key={i} className="mx-8 text-on-navy text-sm font-medium flex items-center gap-3">
-              <span className="material-symbols-outlined text-amber/60" style={{ fontSize: '16px' }}>location_on</span>
+              <span className="material-symbols-outlined text-amber/60" style={{ fontSize: '16px' }}>verified</span>
               {item}
             </span>
           ))}
@@ -234,8 +205,8 @@ export default function HomePage() {
         <Reveal>
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
             <div>
-              <p className="text-amber text-xs font-semibold uppercase tracking-widest mb-2">Curated Collections</p>
-              <h2 className="text-navy font-bold text-3xl md:text-4xl">Find your kind of luxury</h2>
+              <p className="text-amber text-xs font-semibold uppercase tracking-widest mb-2">Browse the fleet</p>
+              <h2 className="text-navy font-display font-semibold text-3xl md:text-4xl">What are you building today?</h2>
             </div>
             <Link href="/browse" className="text-navy font-semibold text-sm flex items-center gap-1 link-grow self-start">
               All categories
@@ -247,9 +218,9 @@ export default function HomePage() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {categories.map((cat, i) => (
             <Reveal key={cat.name} variant="up" delay={i * 80}>
-              <button
-                onClick={() => setActiveCat(cat.name)}
-                className="detach detach-dark group w-full h-52 rounded-2xl overflow-hidden text-left"
+              <Link
+                href={`/browse?cat=${encodeURIComponent(cat.name)}`}
+                className="detach detach-dark group block w-full h-52 rounded-2xl overflow-hidden text-left relative"
               >
                 <img
                   src={cat.img}
@@ -263,8 +234,7 @@ export default function HomePage() {
                   </span>
                   <p className="text-white font-semibold text-sm">{cat.name}</p>
                 </div>
-                <div className={`absolute top-3 right-3 w-2 h-2 rounded-full transition-all ${activeCat === cat.name ? 'bg-amber scale-125' : 'bg-white/40'}`} />
-              </button>
+              </Link>
             </Reveal>
           ))}
         </div>
@@ -273,124 +243,106 @@ export default function HomePage() {
       {/* ══════════════ PARALLAX SHOWCASE BANNER ══════════════ */}
       <section className="detach detach-dark relative h-[60vh] min-h-[420px] flex items-center overflow-hidden rounded-[28px] mx-3 sm:mx-5 my-4 shadow-[0_24px_60px_-20px_rgba(15,23,42,0.45)]">
         <ParallaxImage
-          src="https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?w=1600&q=80"
-          alt="Coastal villa"
+          src="/images/products/cat-320-excavator.jpg"
+          alt="CAT 320 excavator on site"
           speed={0.45}
           fill
         />
         <div className="absolute inset-0 bg-navy/60" />
         <div className="relative z-10 max-w-[1440px] mx-auto px-6 w-full text-center">
           <Reveal>
-            <p className="text-amber text-xs font-semibold uppercase tracking-widest mb-4">The LuxRent Standard</p>
+            <p className="text-amber text-xs font-semibold uppercase tracking-widest mb-4">The Rentora Standard</p>
           </Reveal>
           <Reveal delay={120}>
-            <h2 className="text-white font-bold text-3xl md:text-5xl max-w-[48rem] mx-auto leading-tight">
-              Spaces that move you, service that never stops.
+            <h2 className="text-white font-display font-semibold text-3xl md:text-5xl max-w-[48rem] mx-auto leading-tight">
+              Iron that shows up serviced, fuelled and ready to dig.
             </h2>
           </Reveal>
           <Reveal delay={240}>
             <Link href="/browse" className="btn-primary mt-8 inline-flex px-8 py-3.5 rounded-xl text-base">
-              Discover the collection
+              Browse the fleet
               <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>arrow_forward</span>
             </Link>
           </Reveal>
         </div>
       </section>
 
-      {/* ══════════════ FEATURED LISTINGS ══════════════ */}
+      {/* ══════════════ FEATURED EQUIPMENT ══════════════ */}
       <section className="max-w-[1440px] mx-auto px-6 py-16 md:py-24">
         <Reveal>
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
             <div>
-              <p className="text-amber text-xs font-semibold uppercase tracking-widest mb-2">Handpicked for you</p>
-              <h2 className="text-navy font-bold text-3xl md:text-4xl">Featured stays</h2>
+              <p className="text-amber text-xs font-semibold uppercase tracking-widest mb-2">Straight from the yard</p>
+              <h2 className="text-navy font-display font-semibold text-3xl md:text-4xl">Featured equipment</h2>
             </div>
             <Link href="/browse" className="text-navy font-semibold text-sm flex items-center gap-1 link-grow self-start">
-              View all listings
+              View full catalog
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
             </Link>
           </div>
         </Reveal>
 
-        {filtered.length === 0 ? (
-          <p className="text-slate text-center py-16">No stays match &ldquo;{searchQuery}&rdquo;.</p>
+        {products.length === 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="property-card h-80 animate-pulse bg-surface-high" />
+            ))}
+          </div>
+        ) : featured.length === 0 ? (
+          <p className="text-slate text-center py-16">Nothing matches &ldquo;{searchQuery}&rdquo;.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((property, i) => (
-              <Reveal key={property.id} variant="up" delay={(i % 3) * 100}>
-                <article className="group property-card h-full">
+            {featured.map((product, i) => (
+              <Reveal key={product.id} variant="up" delay={(i % 3) * 100}>
+                <Link href={`/browse/${product.id}`} className="group property-card h-full flex flex-col">
                   <div className="relative h-56 overflow-hidden bg-surface-high">
                     <img
-                      src={property.img}
-                      alt={property.title}
+                      src={product.image}
+                      alt={product.name}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-navy/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    {property.tag && <span className="absolute top-3 left-3 badge-navy text-[10px] backdrop-blur bg-white/90">{property.tag}</span>}
-                    {property.rating > 0 && (
-                      <div className="absolute top-3 right-3 bg-white/95 backdrop-blur px-2.5 py-1 rounded-full flex items-center gap-1">
-                        <span className="material-symbols-outlined text-amber" style={{ fontSize: '14px', fontVariationSettings: "'FILL' 1" }}>star</span>
-                        <span className="text-navy text-xs font-semibold">{property.rating}</span>
-                      </div>
-                    )}
-                    <button
-                      onClick={(e) => { e.preventDefault(); toggleFavorite(property.id); }}
-                      className="absolute bottom-3 right-3 p-2 bg-white/90 rounded-full hover:bg-white hover:scale-110 transition-all"
-                      aria-label="Toggle favorite"
-                    >
-                      <span
-                        className="material-symbols-outlined text-slate"
-                        style={{
-                          fontSize: '18px',
-                          fontVariationSettings: favorites.includes(property.id) ? "'FILL' 1" : "'FILL' 0",
-                          color: favorites.includes(property.id) ? '#D97706' : undefined,
-                        }}
-                      >
-                        favorite
-                      </span>
-                    </button>
+                    <span className="absolute top-3 left-3 badge-navy text-[10px] backdrop-blur bg-white/90">{product.brand}</span>
+                    <div className="absolute top-3 right-3 bg-white/95 backdrop-blur px-2.5 py-1 rounded-full flex items-center gap-1">
+                      <span className="material-symbols-outlined text-amber" style={{ fontSize: '14px', fontVariationSettings: "'FILL' 1" }}>star</span>
+                      <span className="text-navy text-xs font-semibold">{product.rating}</span>
+                    </div>
                   </div>
 
-                  <Link href={`/browse/${property.id}`} className="p-4 flex flex-col gap-2 flex-grow">
+                  <div className="p-4 flex flex-col gap-2 flex-grow">
                     <h3 className="font-semibold text-navy text-base leading-snug line-clamp-1 group-hover:text-amber transition-colors">
-                      {property.title}
+                      {product.name}
                     </h3>
                     <p className="text-slate text-xs flex items-center gap-1">
-                      <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>location_on</span>
-                      {property.location}
+                      <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>category</span>
+                      {product.category}
                     </p>
                     <div className="flex items-center justify-between pt-3 border-t border-slate/10 mt-auto">
                       <div>
-                        <span className="text-navy font-bold text-lg font-currency">${property.price}</span>
+                        <span className="text-navy font-bold text-lg font-currency">₹{product.daily.toLocaleString()}</span>
                         <span className="text-slate text-xs">/day</span>
                       </div>
-                      <div className="flex items-center gap-3 text-slate text-xs">
-                        <span className="flex items-center gap-1">
-                          <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>bed</span>
-                          {property.beds}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>shower</span>
-                          {property.baths}
-                        </span>
-                      </div>
+                      <span className="text-slate text-xs flex items-center gap-1">
+                        <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>security</span>
+                        ₹{product.deposit.toLocaleString()} deposit
+                      </span>
                     </div>
-                  </Link>
-                </article>
+                  </div>
+                </Link>
               </Reveal>
             ))}
           </div>
         )}
       </section>
 
-      {/* ══════════════ WHY LUXRENT ══════════════ */}
+      {/* ══════════════ WHY RENTORA ══════════════ */}
       <section className="bg-white border-y border-slate/10 py-16 md:py-24">
         <div className="max-w-[1440px] mx-auto px-6">
           <Reveal>
             <div className="text-center max-w-[42rem] mx-auto mb-14">
-              <p className="text-amber text-xs font-semibold uppercase tracking-widest mb-2">Why LuxRent</p>
-              <h2 className="text-navy font-bold text-3xl md:text-4xl">Effortless from search to stay</h2>
-              <p className="text-slate mt-4">Everything you need for a seamless rental experience, backed by people who care.</p>
+              <p className="text-amber text-xs font-semibold uppercase tracking-widest mb-2">Why Rentora</p>
+              <h2 className="text-navy font-display font-semibold text-3xl md:text-4xl">From quote to job site, no surprises</h2>
+              <p className="text-slate mt-4">Transparent pricing, real availability, and deposits that come back — the way renting should work.</p>
             </div>
           </Reveal>
 
@@ -430,13 +382,14 @@ export default function HomePage() {
               <div>
                 <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber/15 border border-amber/25 text-amber text-xs font-semibold uppercase tracking-widest">
                   <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>trending_up</span>
-                  Earn with LuxRent
+                  Earn with Rentora
                 </span>
-                <h2 className="mt-5 text-white font-bold text-3xl md:text-4xl leading-tight">
-                  Turn your property into <span className="text-amber">premium income</span>
+                <h2 className="mt-5 text-white font-display font-semibold text-3xl md:text-4xl leading-tight">
+                  Turn idle equipment into <span className="text-amber">working capital</span>
                 </h2>
                 <p className="mt-4 text-on-navy text-base leading-relaxed max-w-[34rem]">
-                  Join thousands of owners earning with LuxRent. List in minutes, set your own rates, and let our concierge team handle bookings, payments, and guests.
+                  Machines parked in the yard don&apos;t pay for themselves. List your fleet on
+                  Rentora, set your rates, and we handle bookings, deposits and payments.
                 </p>
 
                 <ul className="mt-6 grid sm:grid-cols-2 gap-3">
@@ -455,7 +408,7 @@ export default function HomePage() {
                     Become a Vendor
                     <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
                   </Link>
-                  <Link href="/browse" className="btn-secondary px-8 py-3.5 rounded-xl text-base border-white/30 hover:bg-white/10" style={{ color: '#fff' }}>
+                  <Link href="/how-it-works" className="btn-outline-light px-8 py-3.5 rounded-xl text-base">
                     How it works
                   </Link>
                 </div>
@@ -468,7 +421,7 @@ export default function HomePage() {
                     <div>
                       <p className="text-on-navy text-xs uppercase tracking-wider">Est. monthly earnings</p>
                       <p className="text-white font-bold text-3xl mt-1 font-currency">
-                        $<CountUp end={12480} />
+                        ₹<CountUp end={248000} />
                       </p>
                     </div>
                     <span className="badge-green text-[11px]">+18% MoM</span>
@@ -490,7 +443,7 @@ export default function HomePage() {
                         <div key={i} className={`w-8 h-8 rounded-full bg-gradient-to-br ${g} ring-2 ring-navy`} />
                       ))}
                     </div>
-                    <p className="text-white/80 text-xs">Joined by <span className="text-white font-semibold">8,500+</span> owners worldwide</p>
+                    <p className="text-white/80 text-xs">Joined by <span className="text-white font-semibold">1,400+</span> fleet owners</p>
                   </div>
                 </div>
               </div>

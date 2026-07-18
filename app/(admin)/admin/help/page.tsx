@@ -26,7 +26,7 @@ export default function AdminHelpPage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-h1 text-navy">Help & Documentation</h1>
-        <p className="text-slate text-sm mt-1">Everything you need to run your rental business on LuxRent.</p>
+        <p className="text-slate text-sm mt-1">Everything you need to run your rental business on Rentora.</p>
       </div>
 
       {/* Quick start banner */}
