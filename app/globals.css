@@ -20,13 +20,20 @@
   --color-outline-soft: rgba(100, 116, 139, 0.2);
 
   /* Spacing */
-  --spacing-xs: 4px;
-  --spacing-sm: 12px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-  --spacing-2xl: 48px;
   --spacing-gutter: 24px;
+
+  /* Restore max-width scale so container classes (max-w-xs through max-w-7xl) function with proper dimensions */
+  --max-width-xs: 20rem;
+  --max-width-sm: 24rem;
+  --max-width-md: 28rem;
+  --max-width-lg: 32rem;
+  --max-width-xl: 36rem;
+  --max-width-2xl: 42rem;
+  --max-width-3xl: 48rem;
+  --max-width-4xl: 56rem;
+  --max-width-5xl: 64rem;
+  --max-width-6xl: 72rem;
+  --max-width-7xl: 80rem;
 
   /* Border radius */
   --radius-sm: 4px;
