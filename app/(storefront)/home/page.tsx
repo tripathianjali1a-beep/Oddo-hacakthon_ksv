@@ -163,11 +163,7 @@ export default function HomePage() {
             <Reveal delay={300}>
               <div className="mt-8 flex flex-col sm:flex-row gap-3 max-w-[36rem]">
                 <div className="relative flex-1 group">
-<<<<<<< HEAD
                   <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/50 shrink-0" style={{ fontSize: '20px' }}>
-=======
-                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/50" style={{ fontSize: '20px' }}>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
                     search
                   </span>
                   <input
@@ -178,15 +174,9 @@ export default function HomePage() {
                     className="w-full pl-12 pr-4 py-4 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-white/50 outline-none focus:border-amber focus:bg-white/15 transition-all"
                   />
                 </div>
-<<<<<<< HEAD
                 <Link href="/browse" className="btn-primary text-base py-4 px-8 rounded-xl shadow-lg shadow-amber/30 flex items-center justify-center gap-2">
                   <span>Explore</span>
                   <span className="material-symbols-outlined shrink-0" style={{ fontSize: '20px' }}>arrow_forward</span>
-=======
-                <Link href="/browse" className="btn-primary text-base py-4 px-8 rounded-xl shadow-lg shadow-amber/30">
-                  Explore
-                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>arrow_forward</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
                 </Link>
               </div>
             </Reveal>
@@ -223,11 +213,7 @@ export default function HomePage() {
         {/* Scroll cue */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-white/50">
           <span className="text-[10px] uppercase tracking-widest">Scroll</span>
-<<<<<<< HEAD
           <span className="material-symbols-outlined animate-cue shrink-0" style={{ fontSize: '20px' }}>keyboard_arrow_down</span>
-=======
-          <span className="material-symbols-outlined animate-cue" style={{ fontSize: '20px' }}>keyboard_arrow_down</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
         </div>
       </section>
 
@@ -236,11 +222,7 @@ export default function HomePage() {
         <div className="flex whitespace-nowrap animate-marquee">
           {[...marqueeItems, ...marqueeItems].map((item, i) => (
             <span key={i} className="mx-8 text-on-navy text-sm font-medium flex items-center gap-3">
-<<<<<<< HEAD
               <span className="material-symbols-outlined text-amber/60 shrink-0" style={{ fontSize: '16px' }}>location_on</span>
-=======
-              <span className="material-symbols-outlined text-amber/60" style={{ fontSize: '16px' }}>location_on</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
               {item}
             </span>
           ))}
@@ -256,13 +238,8 @@ export default function HomePage() {
               <h2 className="text-navy font-bold text-3xl md:text-4xl">Find your kind of luxury</h2>
             </div>
             <Link href="/browse" className="text-navy font-semibold text-sm flex items-center gap-1 link-grow self-start">
-<<<<<<< HEAD
               <span>All categories</span>
               <span className="material-symbols-outlined shrink-0" style={{ fontSize: '18px' }}>arrow_forward</span>
-=======
-              All categories
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
             </Link>
           </div>
         </Reveal>
@@ -281,11 +258,7 @@ export default function HomePage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/30 to-transparent transition-opacity group-hover:from-navy" />
                 <div className="absolute inset-0 p-4 flex flex-col justify-end">
-<<<<<<< HEAD
                   <span className="material-symbols-outlined text-amber mb-1 transition-transform duration-300 group-hover:-translate-y-1 shrink-0" style={{ fontSize: '26px' }}>
-=======
-                  <span className="material-symbols-outlined text-amber mb-1 transition-transform duration-300 group-hover:-translate-y-1" style={{ fontSize: '26px' }}>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
                     {cat.icon}
                   </span>
                   <p className="text-white font-semibold text-sm">{cat.name}</p>
@@ -316,15 +289,9 @@ export default function HomePage() {
             </h2>
           </Reveal>
           <Reveal delay={240}>
-<<<<<<< HEAD
             <Link href="/browse" className="btn-primary mt-8 inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-base">
               <span>Discover the collection</span>
               <span className="material-symbols-outlined shrink-0" style={{ fontSize: '20px' }}>arrow_forward</span>
-=======
-            <Link href="/browse" className="btn-primary mt-8 inline-flex px-8 py-3.5 rounded-xl text-base">
-              Discover the collection
-              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>arrow_forward</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
             </Link>
           </Reveal>
         </div>
@@ -339,13 +306,8 @@ export default function HomePage() {
               <h2 className="text-navy font-bold text-3xl md:text-4xl">Featured stays</h2>
             </div>
             <Link href="/browse" className="text-navy font-semibold text-sm flex items-center gap-1 link-grow self-start">
-<<<<<<< HEAD
               <span>View all listings</span>
               <span className="material-symbols-outlined shrink-0" style={{ fontSize: '18px' }}>arrow_forward</span>
-=======
-              View all listings
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
             </Link>
           </div>
         </Reveal>
@@ -367,11 +329,7 @@ export default function HomePage() {
                     {property.tag && <span className="absolute top-3 left-3 badge-navy text-[10px] backdrop-blur bg-white/90">{property.tag}</span>}
                     {property.rating > 0 && (
                       <div className="absolute top-3 right-3 bg-white/95 backdrop-blur px-2.5 py-1 rounded-full flex items-center gap-1">
-<<<<<<< HEAD
                         <span className="material-symbols-outlined shrink-0 text-amber" style={{ fontSize: '14px', fontVariationSettings: "'FILL' 1" }}>star</span>
-=======
-                        <span className="material-symbols-outlined text-amber" style={{ fontSize: '14px', fontVariationSettings: "'FILL' 1" }}>star</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
                         <span className="text-navy text-xs font-semibold">{property.rating}</span>
                       </div>
                     )}
@@ -381,11 +339,7 @@ export default function HomePage() {
                       aria-label="Toggle favorite"
                     >
                       <span
-<<<<<<< HEAD
                         className="material-symbols-outlined shrink-0 text-slate"
-=======
-                        className="material-symbols-outlined text-slate"
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
                         style={{
                           fontSize: '18px',
                           fontVariationSettings: favorites.includes(property.id) ? "'FILL' 1" : "'FILL' 0",
@@ -402,11 +356,7 @@ export default function HomePage() {
                       {property.title}
                     </h3>
                     <p className="text-slate text-xs flex items-center gap-1">
-<<<<<<< HEAD
                       <span className="material-symbols-outlined shrink-0" style={{ fontSize: '14px' }}>location_on</span>
-=======
-                      <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>location_on</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
                       {property.location}
                     </p>
                     <div className="flex items-center justify-between pt-3 border-t border-slate/10 mt-auto">
@@ -416,19 +366,11 @@ export default function HomePage() {
                       </div>
                       <div className="flex items-center gap-3 text-slate text-xs">
                         <span className="flex items-center gap-1">
-<<<<<<< HEAD
                           <span className="material-symbols-outlined shrink-0" style={{ fontSize: '15px' }}>bed</span>
                           {property.beds}
                         </span>
                         <span className="flex items-center gap-1">
                           <span className="material-symbols-outlined shrink-0" style={{ fontSize: '15px' }}>shower</span>
-=======
-                          <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>bed</span>
-                          {property.beds}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>shower</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
                           {property.baths}
                         </span>
                       </div>
@@ -457,11 +399,7 @@ export default function HomePage() {
               <Reveal key={f.title} variant="up" delay={i * 90}>
                 <div className="group card card-hover p-6 h-full">
                   <div className="w-12 h-12 rounded-xl bg-amber/10 flex items-center justify-center mb-4 transition-all group-hover:bg-amber group-hover:scale-110">
-<<<<<<< HEAD
                     <span className="material-symbols-outlined text-amber group-hover:text-white transition-colors shrink-0" style={{ fontSize: '24px' }}>
-=======
-                    <span className="material-symbols-outlined text-amber group-hover:text-white transition-colors" style={{ fontSize: '24px' }}>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
                       {f.icon}
                     </span>
                   </div>
@@ -491,11 +429,7 @@ export default function HomePage() {
               {/* Copy */}
               <div>
                 <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber/15 border border-amber/25 text-amber text-xs font-semibold uppercase tracking-widest">
-<<<<<<< HEAD
                   <span className="material-symbols-outlined shrink-0" style={{ fontSize: '15px' }}>trending_up</span>
-=======
-                  <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>trending_up</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
                   Earn with LuxRent
                 </span>
                 <h2 className="mt-5 text-white font-bold text-3xl md:text-4xl leading-tight">
@@ -509,11 +443,7 @@ export default function HomePage() {
                   {['No listing fees', 'Secure weekly payouts', 'Full damage protection', 'Dedicated account manager'].map((b) => (
                     <li key={b} className="flex items-center gap-2.5 text-white/85 text-sm">
                       <span className="w-5 h-5 rounded-full bg-amber/20 flex items-center justify-center shrink-0">
-<<<<<<< HEAD
                         <span className="material-symbols-outlined shrink-0 text-amber" style={{ fontSize: '14px', fontVariationSettings: "'FILL' 1" }}>check</span>
-=======
-                        <span className="material-symbols-outlined text-amber" style={{ fontSize: '14px', fontVariationSettings: "'FILL' 1" }}>check</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
                       </span>
                       {b}
                     </li>
@@ -521,15 +451,9 @@ export default function HomePage() {
                 </ul>
 
                 <div className="mt-8 flex flex-col sm:flex-row gap-3">
-<<<<<<< HEAD
                   <Link href="/login" className="btn-primary px-8 py-3.5 rounded-xl text-base animate-shimmer relative overflow-hidden shadow-lg shadow-amber/30 flex items-center justify-center gap-2">
                     <span>Become a Vendor</span>
                     <span className="material-symbols-outlined shrink-0" style={{ fontSize: '18px' }}>arrow_forward</span>
-=======
-                  <Link href="/login" className="btn-primary px-8 py-3.5 rounded-xl text-base animate-shimmer relative overflow-hidden shadow-lg shadow-amber/30">
-                    Become a Vendor
-                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
                   </Link>
                   <Link href="/browse" className="btn-secondary px-8 py-3.5 rounded-xl text-base border-white/30 hover:bg-white/10" style={{ color: '#fff' }}>
                     How it works

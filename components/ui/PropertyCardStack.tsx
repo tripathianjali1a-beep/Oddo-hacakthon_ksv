@@ -85,11 +85,7 @@ export default function PropertyCardStack({ items, interval = 3800 }: Props) {
               {isFront && item.tag && <span className="absolute top-3 left-3 badge-amber text-[10px]">{item.tag}</span>}
               {isFront && item.rating > 0 && (
                 <div className="absolute top-3 right-3 bg-white/95 backdrop-blur px-2.5 py-1 rounded-full flex items-center gap-1">
-<<<<<<< HEAD
                   <span className="material-symbols-outlined shrink-0 text-amber" style={{ fontSize: '13px', fontVariationSettings: "'FILL' 1" }}>star</span>
-=======
-                  <span className="material-symbols-outlined text-amber" style={{ fontSize: '13px', fontVariationSettings: "'FILL' 1" }}>star</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
                   <span className="text-navy text-xs font-semibold">{item.rating}</span>
                 </div>
               )}
@@ -104,11 +100,7 @@ export default function PropertyCardStack({ items, interval = 3800 }: Props) {
                 <div className="min-w-0">
                   <p className="text-white font-semibold text-sm truncate">{item.title}</p>
                   <p className="text-white/50 text-xs flex items-center gap-1 mt-0.5">
-<<<<<<< HEAD
                     <span className="material-symbols-outlined shrink-0" style={{ fontSize: '14px' }}>location_on</span>
-=======
-                    <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>location_on</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
                     {item.location}
                   </p>
                 </div>

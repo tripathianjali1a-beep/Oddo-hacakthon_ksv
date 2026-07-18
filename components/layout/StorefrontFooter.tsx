@@ -44,17 +44,9 @@ const socials = [
 ];
 
 const iconSym: React.CSSProperties = {
-<<<<<<< HEAD
   lineHeight: 1,
   display: 'inline-block',
   verticalAlign: 'middle',
-=======
-  fontFamily: "'Material Symbols Outlined'",
-  fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24",
-  lineHeight: 1,
-  display: 'inline-block',
-  fontStyle: 'normal',
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
 };
 
 export default function StorefrontFooter() {
@@ -80,11 +72,7 @@ export default function StorefrontFooter() {
           </div>
           <form onSubmit={submit} className="flex flex-col sm:flex-row gap-3 md:justify-end">
             <div className="relative flex-1 sm:max-w-[20rem]">
-<<<<<<< HEAD
               <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-on-navy shrink-0" style={{ ...iconSym, fontSize: '18px' }}>mail</span>
-=======
-              <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-on-navy" style={{ ...iconSym, fontSize: '18px' }}>mail</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
               <input
                 type="email"
                 value={email}
@@ -117,11 +105,7 @@ export default function StorefrontFooter() {
                 aria-label={s.label}
                 className="w-9 h-9 rounded-full bg-white/[0.06] border border-white/10 flex items-center justify-center text-on-navy hover:text-white hover:bg-amber hover:border-amber transition-all"
               >
-<<<<<<< HEAD
                 <span className="material-symbols-outlined shrink-0" style={{ ...iconSym, fontSize: '18px' }}>{s.icon}</span>
-=======
-                <span style={{ ...iconSym, fontSize: '18px' }}>{s.icon}</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
               </a>
             ))}
           </div>
@@ -148,7 +132,6 @@ export default function StorefrontFooter() {
           <h4 className="text-white font-semibold text-sm mb-4">Get in touch</h4>
           <ul className="flex flex-col gap-3 text-sm">
             <li className="flex items-start gap-2.5 text-on-navy">
-<<<<<<< HEAD
               <span className="material-symbols-outlined shrink-0 text-amber mt-0.5" style={{ ...iconSym, fontSize: '18px' }}>call</span>
               +1 (800) 555-0199
             </li>
@@ -158,17 +141,6 @@ export default function StorefrontFooter() {
             </li>
             <li className="flex items-start gap-2.5 text-on-navy">
               <span className="material-symbols-outlined shrink-0 text-amber mt-0.5" style={{ ...iconSym, fontSize: '18px' }}>location_on</span>
-=======
-              <span className="material-symbols-outlined text-amber mt-0.5" style={{ ...iconSym, fontSize: '18px' }}>call</span>
-              +1 (800) 555-0199
-            </li>
-            <li className="flex items-start gap-2.5 text-on-navy">
-              <span className="material-symbols-outlined text-amber mt-0.5" style={{ ...iconSym, fontSize: '18px' }}>mail</span>
-              hello@luxrent.com
-            </li>
-            <li className="flex items-start gap-2.5 text-on-navy">
-              <span className="material-symbols-outlined text-amber mt-0.5" style={{ ...iconSym, fontSize: '18px' }}>location_on</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
               350 Fifth Avenue, New York, NY
             </li>
           </ul>
@@ -184,11 +156,7 @@ export default function StorefrontFooter() {
             <Link href="/legal" className="text-on-navy hover:text-white transition-colors">Privacy</Link>
             <Link href="/legal" className="text-on-navy hover:text-white transition-colors">Cookies</Link>
             <span className="flex items-center gap-1.5 text-on-navy">
-<<<<<<< HEAD
               <span className="material-symbols-outlined shrink-0 text-amber" style={{ ...iconSym, fontSize: '15px' }}>language</span>
-=======
-              <span className="material-symbols-outlined text-amber" style={{ ...iconSym, fontSize: '15px' }}>language</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
               English (US)
             </span>
           </div>

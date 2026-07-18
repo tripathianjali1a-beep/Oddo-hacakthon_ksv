@@ -47,11 +47,7 @@ export default function StorefrontHeader() {
             <Logo size={34} />
           </Link>
           <div className="relative hidden md:flex items-center group">
-<<<<<<< HEAD
             <span className="material-symbols-outlined absolute left-3 text-slate/50 group-focus-within:text-amber transition-colors shrink-0" style={{ fontSize: '18px' }}>search</span>
-=======
-            <span className="material-symbols-outlined absolute left-3 text-slate/50 group-focus-within:text-amber transition-colors" style={{ fontSize: '18px' }}>search</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
             <input
               type="text"
               placeholder="Search properties or equipment..."
@@ -88,11 +84,7 @@ export default function StorefrontHeader() {
         {/* Actions */}
         <div className="flex items-center gap-1 shrink-0">
           <Link href="/cart" className="relative p-2.5 rounded-full text-slate hover:text-navy hover:bg-navy/[0.05] flex items-center transition-colors">
-<<<<<<< HEAD
             <span className="material-symbols-outlined shrink-0" style={iconSym}>shopping_cart</span>
-=======
-            <span style={iconSym}>shopping_cart</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
             {cartCount > 0 && (
               <span className="absolute top-1 right-1 bg-amber text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-white">
                 {cartCount}
@@ -100,22 +92,14 @@ export default function StorefrontHeader() {
             )}
           </Link>
           <button className="hidden sm:flex p-2.5 rounded-full text-slate hover:text-navy hover:bg-navy/[0.05] items-center transition-colors">
-<<<<<<< HEAD
             <span className="material-symbols-outlined shrink-0" style={iconSym}>notifications</span>
-=======
-            <span style={iconSym}>notifications</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
           </button>
           <span className="hidden sm:block w-px h-6 bg-slate/15 mx-1.5" />
           <Link
             href="/login"
             className="flex items-center gap-2 pl-1 pr-1 sm:pr-3 py-1 rounded-full hover:bg-navy/[0.05] transition-colors"
           >
-<<<<<<< HEAD
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-navy-container to-navy flex items-center justify-center text-white text-xs font-bold ring-2 ring-amber/30 shrink-0">
-=======
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-navy-container to-navy flex items-center justify-center text-white text-xs font-bold ring-2 ring-amber/30">
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
               U
             </div>
             <span className="hidden sm:block text-navy text-sm font-semibold">Account</span>
@@ -126,11 +110,7 @@ export default function StorefrontHeader() {
             className="lg:hidden p-2.5 rounded-full text-slate hover:text-navy hover:bg-navy/[0.05] flex items-center transition-colors"
             aria-label="Menu"
           >
-<<<<<<< HEAD
             <span className="material-symbols-outlined shrink-0" style={iconSym}>{mobileOpen ? 'close' : 'menu'}</span>
-=======
-            <span style={iconSym}>{mobileOpen ? 'close' : 'menu'}</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
           </button>
         </div>
       </div>
@@ -139,11 +119,7 @@ export default function StorefrontHeader() {
       {mobileOpen && (
         <div className="lg:hidden border-t border-slate/10 bg-white px-6 py-3 animate-fade-in">
           <div className="relative flex items-center mb-3 md:hidden">
-<<<<<<< HEAD
             <span className="material-symbols-outlined absolute left-2.5 text-slate/50 shrink-0" style={{ fontSize: '18px' }}>search</span>
-=======
-            <span className="material-symbols-outlined absolute left-2.5 text-slate/50" style={{ fontSize: '18px' }}>search</span>
->>>>>>> 6a5d09f717306f85784045d827ad2e941e4ade94
             <input
               type="text"
               placeholder="Search…"
