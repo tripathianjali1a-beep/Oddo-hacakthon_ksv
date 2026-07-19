@@ -2,24 +2,57 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuthStore, useCartStore } from '@/lib/store';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
 type Step = 'contact' | 'delivery' | 'payment' | 'confirm';
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const { user, isAuthenticated } = useAuthStore();
+  const { clearCart } = useCartStore();
+
   const [step, setStep] = useState<Step>('contact');
   const [loading, setLoading] = useState(false);
   const [sameAsDelivery, setSameAsDelivery] = useState(true);
   const [saveCard, setSaveCard] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
+  const [placedOrderNumber, setPlacedOrderNumber] = useState<string | null>(null);
+  const [orderError, setOrderError] = useState('');
 
-  const [contact, setContact] = useState({ name: 'Alexander Wright', email: 'alexander@luxrent.com', phone: '+1 (555) 382-9102' });
-  const [delivery, setDelivery] = useState({ method: 'standard', address: '742 Evergreen Terrace', city: 'Springfield', zip: '97477', notes: 'Gate code #4092. Please drop off near main equipment loading dock.' });
-  const [payment, setPayment] = useState({ cardName: 'Alexander Wright', cardNumber: '4532 •••• •••• 8821', expiry: '08 / 28', cvv: '912' });
+  const [contact, setContact] = useState({
+    name: user?.full_name || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+  });
+  const [delivery, setDelivery] = useState({
+    method: 'store_pickup',
+    address: '',
+    city: '',
+    zip: '',
+    notes: '',
+  });
+  const [payment, setPayment] = useState({
+    cardName: user?.full_name || '',
+    cardNumber: '',
+    expiry: '',
+    cvv: '',
+  });
 
   const steps: Step[] = ['contact', 'delivery', 'payment', 'confirm'];
-  const stepLabels: Record<Step, string> = { contact: '1. Contact & Address', delivery: '2. Delivery Method', payment: '3. Payment Details', confirm: '4. Order Confirmation' };
-  const stepIcons: Record<Step, string> = { contact: 'person', delivery: 'local_shipping', payment: 'credit_card', confirm: 'check_circle' };
+  const stepLabels: Record<Step, string> = {
+    contact: '1. Contact & Address',
+    delivery: '2. Delivery Method',
+    payment: '3. Payment Details',
+    confirm: '4. Order Confirmation',
+  };
+  const stepIcons: Record<Step, string> = {
+    contact: 'person',
+    delivery: 'local_shipping',
+    payment: 'credit_card',
+    confirm: 'check_circle',
+  };
 
   const currentIndex = steps.indexOf(step);
 
@@ -32,7 +65,6 @@ export default function CheckoutPage() {
     if (currentIndex < steps.length - 1) {
       const nextStep = steps[currentIndex + 1];
       setStep(nextStep);
-      triggerToast(`Proceeding to ${stepLabels[nextStep]}`);
     }
   };
 
@@ -41,11 +73,39 @@ export default function CheckoutPage() {
   };
 
   const placeOrder = async () => {
+    if (!isAuthenticated) {
+      router.push('/login?redirect=/checkout');
+      return;
+    }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setLoading(false);
-    triggerToast('Order placed successfully! Redirecting to confirmation...');
-    setTimeout(() => router.push('/home'), 1500);
+    setOrderError('');
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+      const payload: Record<string, unknown> = {
+        delivery_method: delivery.method === 'standard' ? 'delivery' : 'store_pickup',
+        notes: delivery.notes || undefined,
+      };
+
+      const res = await fetch(`${API_BASE}/orders/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Order creation failed');
+
+      setPlacedOrderNumber(data.order_number);
+      clearCart();
+      triggerToast(`Order #${data.order_number} placed successfully!`);
+      setStep('confirm');
+    } catch (err: unknown) {
+      setOrderError(err instanceof Error ? err.message : 'Order failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -355,18 +415,55 @@ export default function CheckoutPage() {
             {/* Step 4: Confirm Order */}
             {step === 'confirm' && (
               <div className="animate-fade-in text-center py-8 space-y-4">
-                <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-md">
-                  <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>task_alt</span>
-                </div>
-                <h2 className="text-2xl font-bold text-navy">Ready to Finalize Rental Order</h2>
-                <p className="text-slate text-sm max-w-md mx-auto">By clicking Pay Now below, you authorize the commercial equipment lease agreement and deposit verification.</p>
+                {placedOrderNumber ? (
+                  // SUCCESS STATE — real order was created
+                  <>
+                    <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-md">
+                      <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>task_alt</span>
+                    </div>
+                    <h2 className="text-2xl font-bold text-navy">Order Placed Successfully!</h2>
+                    <p className="text-slate text-sm">Your rental order has been created.</p>
+                    <div className="inline-block bg-emerald-50 border border-emerald-200 text-emerald-800 font-mono font-bold text-lg px-6 py-3 rounded-xl">
+                      #{placedOrderNumber}
+                    </div>
+                    <div className="bg-emerald-600 text-white font-bold text-sm px-6 py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 max-w-sm mx-auto">
+                      <span className="material-symbols-outlined shrink-0 text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                      <span>Order confirmed. We will contact you shortly.</span>
+                    </div>
+                    <div className="flex gap-3 justify-center pt-2">
+                      <Link href="/orders" className="btn-primary py-2.5 px-6 text-sm flex items-center gap-1.5">
+                        <span className="material-symbols-outlined shrink-0" style={{ fontSize: '16px' }}>receipt_long</span>
+                        View My Orders
+                      </Link>
+                      <Link href="/browse" className="btn-secondary py-2.5 px-6 text-sm">
+                        Continue Shopping
+                      </Link>
+                    </div>
+                  </>
+                ) : (
+                  // PRE-SUBMIT STATE — review before placing
+                  <>
+                    <div className="w-16 h-16 rounded-full bg-amber/10 text-amber flex items-center justify-center mx-auto shadow-md">
+                      <span className="material-symbols-outlined text-4xl">shopping_cart_checkout</span>
+                    </div>
+                    <h2 className="text-2xl font-bold text-navy">Ready to Place Order</h2>
+                    <p className="text-slate text-sm max-w-md mx-auto">Review your details below and confirm your rental order.</p>
 
-                <div className="text-left bg-ivory rounded-xl border border-slate/15 p-5 space-y-2.5 text-xs font-medium text-navy max-w-lg mx-auto">
-                  <div className="flex justify-between"><span className="text-slate">Contract Entity:</span><span>{contact.name}</span></div>
-                  <div className="flex justify-between"><span className="text-slate">Delivery Site:</span><span>{delivery.address}, {delivery.city}</span></div>
-                  <div className="flex justify-between"><span className="text-slate">Delivery Method:</span><span className="capitalize">{delivery.method === 'standard' ? 'Standard Delivery (Free)' : 'Self Pickup (Free)'}</span></div>
-                  <div className="flex justify-between"><span className="text-slate">Payment Authorization:</span><span>Card ending in 8821</span></div>
-                </div>
+                    {orderError && (
+                      <div className="bg-red-50 border border-red-200 text-red-600 text-xs p-3 rounded-xl text-left max-w-lg mx-auto">
+                        {orderError}
+                      </div>
+                    )}
+
+                    <div className="text-left bg-ivory rounded-xl border border-slate/15 p-5 space-y-2.5 text-xs font-medium text-navy max-w-lg mx-auto">
+                      <div className="flex justify-between"><span className="text-slate">Name:</span><span>{contact.name || user?.full_name || '—'}</span></div>
+                      <div className="flex justify-between"><span className="text-slate">Email:</span><span>{contact.email || user?.email || '—'}</span></div>
+                      <div className="flex justify-between"><span className="text-slate">Delivery:</span><span className="capitalize">{delivery.method === 'standard' ? 'Standard Delivery' : 'Store Pickup (Free)'}</span></div>
+                      {delivery.address && <div className="flex justify-between"><span className="text-slate">Address:</span><span>{delivery.address}, {delivery.city}</span></div>}
+                      {delivery.notes && <div className="flex justify-between"><span className="text-slate">Notes:</span><span className="truncate max-w-[200px]">{delivery.notes}</span></div>}
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -417,7 +514,7 @@ export default function CheckoutPage() {
             )}
 
             {/* Navigation Controls */}
-            {step !== ('orderSuccess' as any) && (
+            {!(step === 'confirm' && placedOrderNumber) && (
               <div className="flex justify-between items-center mt-8 pt-6 border-t border-slate/15">
                 <button
                   type="button"
@@ -432,20 +529,14 @@ export default function CheckoutPage() {
                 {step === 'payment' || step === 'confirm' ? (
                   <button
                     type="button"
-                    onClick={async () => {
-                      setLoading(true);
-                      await new Promise((r) => setTimeout(r, 1200));
-                      setLoading(false);
-                      setStep('orderSuccess' as any);
-                      triggerToast('Sale order SO00010 created and invoiced in backend!');
-                    }}
+                    onClick={placeOrder}
                     disabled={loading}
                     className="btn-primary py-3.5 px-8 text-sm flex items-center justify-center gap-2 shadow-xl hover:bg-amber transition-all font-bold"
                   >
                     {loading ? (
-                      <><span className="material-symbols-outlined shrink-0 animate-spin" style={{ fontSize: '20px' }}>refresh</span><span>Processing Payment...</span></>
+                      <><span className="material-symbols-outlined shrink-0 animate-spin" style={{ fontSize: '20px' }}>refresh</span><span>Placing Order...</span></>
                     ) : (
-                      <><span className="material-symbols-outlined shrink-0" style={{ fontSize: '20px', fontVariationSettings: "'FILL' 1" }}>verified_user</span><span>Authorize & Pay Now ($2,396)</span></>
+                      <><span className="material-symbols-outlined shrink-0" style={{ fontSize: '20px', fontVariationSettings: "'FILL' 1" }}>verified_user</span><span>Confirm & Place Order</span></>
                     )}
                   </button>
                 ) : (
