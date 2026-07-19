@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import type { DashboardData } from '@/lib/types';
 
 const fmtMoney = (n: number) => {
@@ -10,6 +11,7 @@ const fmtMoney = (n: number) => {
 };
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [baseRent, setBaseRent] = useState('2500.00');
   const [daysLate, setDaysLate] = useState('5');
@@ -125,7 +127,7 @@ export default function AdminDashboard() {
                     <tr><td colSpan={5} className="table-cell text-center text-slate py-8">No items require attention. 🎉</td></tr>
                   )}
                   {overdueRentals.map((rental) => (
-                    <tr key={rental.id} className="table-row">
+                    <tr key={rental.id} className="table-row cursor-pointer" onClick={() => router.push(`/admin/orders?focus=${rental.id}`)}>
                       <td className="table-cell">
                         <p className="font-semibold text-navy text-sm">{rental.customer}</p>
                         <p className="text-slate text-xs">{rental.item}</p>
@@ -134,9 +136,9 @@ export default function AdminDashboard() {
                       <td className={`table-cell font-semibold ${rental.daysLate > 30 ? 'text-red-600' : 'text-amber'}`}>{rental.daysLate} Days</td>
                       <td className="table-cell"><span className={rental.badge}>{rental.badgeLabel}</span></td>
                       <td className="table-cell text-right">
-                        <button className="p-1.5 border border-slate/20 rounded hover:border-amber hover:text-amber text-slate transition-all">
-                          <span className="material-symbols-outlined" style={{fontSize:'16px'}}>more_horiz</span>
-                        </button>
+                        <span className="p-1.5 inline-flex border border-slate/20 rounded text-slate">
+                          <span className="material-symbols-outlined" style={{fontSize:'16px'}}>chevron_right</span>
+                        </span>
                       </td>
                     </tr>
                   ))}
@@ -201,12 +203,10 @@ export default function AdminDashboard() {
                   <input type="text" value={dailyRate} onChange={(e) => setDailyRate(e.target.value)} className="input-field text-sm" />
                 </div>
               </div>
-              <div className="pt-3 border-t border-slate/10 flex justify-between items-end">
-                <div>
-                  <p className="text-[10px] font-semibold text-slate uppercase tracking-wide mb-1">Calculated Fee</p>
-                  <p className="text-h3 text-red-600 font-currency">₹{calculatedFee}</p>
-                </div>
-                <button className="btn-primary text-xs py-2 px-4">Apply</button>
+              <div className="pt-3 border-t border-slate/10">
+                <p className="text-[10px] font-semibold text-slate uppercase tracking-wide mb-1">Calculated Fee</p>
+                <p className="text-h3 text-red-600 font-currency">₹{calculatedFee}</p>
+                <p className="text-[11px] text-slate mt-1">Reference only — enter the actual fee on the order's return screen in Orders.</p>
               </div>
             </div>
           </div>

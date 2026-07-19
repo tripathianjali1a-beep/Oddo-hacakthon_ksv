@@ -1,9 +1,10 @@
-'use client';
+﻿'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Logo from '@/components/ui/Logo';
 import { cartCount } from '@/lib/cart';
+import { getSession, clearSession, isStaff, type SessionUser } from '@/lib/session';
 
 const navLinks = [
   { label: 'Browse', href: '/browse' },
@@ -32,6 +33,7 @@ export default function StorefrontHeader() {
   const [searchValue, setSearchValue] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [user, setUser] = useState<SessionUser | null>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -51,6 +53,22 @@ export default function StorefrontHeader() {
       window.removeEventListener('storage', sync);
     };
   }, []);
+
+  // Load user from the shared session helper
+  useEffect(() => {
+    const syncUser = () => setUser(getSession());
+    syncUser();
+    window.addEventListener('storage', syncUser);
+    return () => window.removeEventListener('storage', syncUser);
+  }, []);
+
+  const handleLogout = () => {
+    clearSession();
+    setUser(null);
+    router.push('/home');
+  };
+
+  const initials = user?.name ? user.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() : 'U';
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,19 +136,46 @@ export default function StorefrontHeader() {
               </span>
             )}
           </Link>
-          <button className="hidden sm:flex p-2.5 rounded-full text-slate hover:text-navy hover:bg-navy/[0.05] items-center transition-colors">
-            <span style={iconSym}>notifications</span>
-          </button>
           <span className="hidden sm:block w-px h-6 bg-slate/15 mx-1.5" />
-          <Link
-            href="/login"
-            className="flex items-center gap-2 pl-1 pr-1 sm:pr-3 py-1 rounded-full hover:bg-navy/[0.05] transition-colors"
-          >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-navy-container to-navy flex items-center justify-center text-white text-xs font-bold ring-2 ring-amber/30">
-              U
+
+          {user ? (
+            <div className="relative group">
+              <button className="flex items-center gap-2 pl-1 pr-1 sm:pr-3 py-1 rounded-full hover:bg-navy/[0.05] transition-colors">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber to-orange-500 flex items-center justify-center text-white text-xs font-bold ring-2 ring-amber/30">
+                  {initials}
+                </div>
+                <span className="hidden sm:block text-navy text-sm font-semibold truncate max-w-[80px]">{user.name.split(' ')[0]}</span>
+              </button>
+              {/* Dropdown */}
+              <div className="absolute right-0 top-full mt-2 w-44 bg-white rounded-xl border border-slate/15 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50 overflow-hidden">
+                <div className="px-4 py-3 border-b border-slate/10">
+                  <p className="text-navy font-semibold text-sm truncate">{user.name}</p>
+                  <p className="text-slate text-xs truncate">{user.email}</p>
+                </div>
+                {isStaff(user.role) && (
+                  <Link href="/admin/dashboard" className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate hover:text-navy hover:bg-ivory transition-colors">
+                    <span className="material-symbols-outlined" style={{fontSize:'16px'}}>dashboard</span>
+                    {user.role === 'admin' ? 'Admin Portal' : 'Vendor Portal'}
+                  </Link>
+                )}
+                <button onClick={handleLogout} className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors">
+                  <span className="material-symbols-outlined" style={{fontSize:'16px'}}>logout</span>
+                  Sign out
+                </button>
+              </div>
             </div>
-            <span className="hidden sm:block text-navy text-sm font-semibold">Account</span>
-          </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="flex items-center gap-2 pl-1 pr-1 sm:pr-3 py-1 rounded-full hover:bg-navy/[0.05] transition-colors"
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-navy-container to-navy flex items-center justify-center text-white text-xs font-bold ring-2 ring-amber/30">
+                U
+              </div>
+              <span className="hidden sm:block text-navy text-sm font-semibold">Account</span>
+            </Link>
+          )}
+
           {/* Mobile menu toggle */}
           <button
             onClick={() => setMobileOpen((o) => !o)}
@@ -149,7 +194,7 @@ export default function StorefrontHeader() {
             <span className="material-symbols-outlined absolute left-2.5 text-slate/50" style={{ fontSize: '18px' }}>search</span>
             <input
               type="text"
-              placeholder="Search…"
+              placeholder="Searchâ€¦"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               className="pl-9 pr-3.5 py-2 text-[13px] border border-slate/20 rounded-md bg-ivory outline-none w-full focus:border-amber transition-colors"
@@ -168,6 +213,15 @@ export default function StorefrontHeader() {
                 {link.label}
               </Link>
             ))}
+            {user ? (
+              <button onClick={handleLogout} className="px-2 py-2.5 rounded-md text-sm text-red-500 text-left">
+                Sign out ({user.name})
+              </button>
+            ) : (
+              <Link href="/login" onClick={() => setMobileOpen(false)} className="px-2 py-2.5 rounded-md text-sm text-slate font-medium">
+                Sign In
+              </Link>
+            )}
           </nav>
         </div>
       )}

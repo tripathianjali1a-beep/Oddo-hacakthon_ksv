@@ -2,10 +2,10 @@ import Link from 'next/link';
 import PageHero from '@/components/ui/PageHero';
 
 const stats = [
-  { n: '1,248+', l: 'Units in fleet' },
-  { n: '42', l: 'Depots nationwide' },
-  { n: '8,500+', l: 'Verified vendors' },
-  { n: '4.9★', l: 'Average rating' },
+  { n: 'Inspected', l: 'Certified fleet' },
+  { n: 'Transparent', l: 'Upfront pricing' },
+  { n: 'Protected', l: 'Secure deposits' },
+  { n: '24/7', l: 'Concierge support' },
 ];
 
 const values = [
@@ -18,8 +18,8 @@ const values = [
 const timeline = [
   { year: '2019', text: 'Rentora founded with a handful of excavators and generators in New York.' },
   { year: '2021', text: 'Expanded into studio gear and furniture, and launched the vendor marketplace.' },
-  { year: '2023', text: 'Reached 40+ depots and introduced 24/7 concierge support.' },
-  { year: '2024', text: 'Crossed 1,200 active units and 8,500 verified vendors nationwide.' },
+  { year: '2023', text: 'Expanded the depot network and introduced 24/7 concierge support.' },
+  { year: '2024', text: 'Grew the vendor marketplace with verified owners nationwide.' },
 ];
 
 export default function AboutPage() {

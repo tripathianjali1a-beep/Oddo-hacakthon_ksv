@@ -1,65 +1,123 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const sections = [
   {
     title: 'Rental Policy',
     icon: 'policy',
     fields: [
-      { key: 'minRental', label: 'Minimum Rental Duration', type: 'select', options: ['1 Day', '3 Days', '7 Days', '1 Month'], value: '1 Day' },
-      { key: 'maxRental', label: 'Maximum Rental Duration', type: 'select', options: ['7 Days', '14 Days', '30 Days', '90 Days', '365 Days'], value: '30 Days' },
-      { key: 'bufferTime', label: 'Buffer Time Between Rentals', type: 'select', options: ['None', '1 Day', '2 Days', '3 Days'], value: '1 Day' },
+      { key: 'minRental', label: 'Minimum Rental Duration', type: 'select', options: ['1 Day', '3 Days', '7 Days', '1 Month'], defaultValue: '1 Day' },
+      { key: 'maxRental', label: 'Maximum Rental Duration', type: 'select', options: ['7 Days', '14 Days', '30 Days', '90 Days', '365 Days'], defaultValue: '30 Days' },
+      { key: 'bufferTime', label: 'Buffer Time Between Rentals', type: 'select', options: ['None', '1 Day', '2 Days', '3 Days'], defaultValue: '1 Day' },
     ],
   },
   {
     title: 'Late Fee Settings',
     icon: 'schedule',
     fields: [
-      { key: 'gracePeriod', label: 'Grace Period (Days)', type: 'number', placeholder: '0', value: '3' },
-      { key: 'lateFeeType', label: 'Late Fee Type', type: 'select', options: ['Fixed Amount', 'Percentage per Day', 'Percentage per Week'], value: 'Percentage per Day' },
-      { key: 'lateFeeRate', label: 'Late Fee Rate (%/day)', type: 'number', placeholder: '1.5', value: '1.5' },
-      { key: 'maxLateFee', label: 'Maximum Late Fee Cap (₹)', type: 'number', placeholder: '500', value: '500' },
+      { key: 'gracePeriod', label: 'Grace Period (Days)', type: 'number', placeholder: '0', defaultValue: '3' },
+      { key: 'lateFeeType', label: 'Late Fee Type', type: 'select', options: ['Fixed Amount', 'Percentage per Day', 'Percentage per Week'], defaultValue: 'Percentage per Day' },
+      { key: 'lateFeeRate', label: 'Late Fee Rate (%/day)', type: 'number', placeholder: '1.5', defaultValue: '1.5' },
+      { key: 'maxLateFee', label: 'Maximum Late Fee Cap (₹)', type: 'number', placeholder: '500', defaultValue: '500' },
     ],
   },
   {
     title: 'Deposit Rules',
     icon: 'account_balance',
     fields: [
-      { key: 'depositType', label: 'Deposit Calculation', type: 'select', options: ['Fixed Amount', 'Percentage of Order', 'Per Category Rule'], value: 'Percentage of Order' },
-      { key: 'depositPct', label: 'Deposit Percentage (%)', type: 'number', placeholder: '20', value: '20' },
-      { key: 'depositRefund', label: 'Refund Period (Days)', type: 'number', placeholder: '7', value: '7' },
+      { key: 'depositType', label: 'Deposit Calculation', type: 'select', options: ['Fixed Amount', 'Percentage of Order', 'Per Category Rule'], defaultValue: 'Percentage of Order' },
+      { key: 'depositPct', label: 'Deposit Percentage (%)', type: 'number', placeholder: '20', defaultValue: '20' },
+      { key: 'depositRefund', label: 'Refund Period (Days)', type: 'number', placeholder: '7', defaultValue: '7' },
     ],
   },
   {
     title: 'Notifications',
     icon: 'notifications',
     fields: [
-      { key: 'reminderDays', label: 'Return Reminder (Days Before Due)', type: 'number', placeholder: '2', value: '2' },
-      { key: 'overdueFreq', label: 'Overdue Notice Frequency', type: 'select', options: ['Daily', 'Every 2 Days', 'Weekly'], value: 'Daily' },
+      { key: 'reminderDays', label: 'Return Reminder (Days Before Due)', type: 'number', placeholder: '2', defaultValue: '2' },
+      { key: 'overdueFreq', label: 'Overdue Notice Frequency', type: 'select', options: ['Daily', 'Every 2 Days', 'Weekly'], defaultValue: 'Daily' },
     ],
   },
 ];
 
+// Build defaults map
+const DEFAULTS = Object.fromEntries(
+  sections.flatMap((s) => s.fields.map((f) => [f.key, f.defaultValue]))
+);
+
 export default function AdminConfigPage() {
-  const [config, setConfig] = useState(() =>
-    Object.fromEntries(sections.flatMap((s) => s.fields.map((f) => [f.key, f.value])))
-  );
+  const [config, setConfig] = useState<Record<string, string>>(DEFAULTS);
+  const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState(0);
+  const [error, setError] = useState('');
+
+  // Load persisted config from API on mount
+  useEffect(() => {
+    fetch('/api/config')
+      .then((r) => r.json())
+      .then((data: Record<string, string>) => {
+        // Merge saved values over defaults so any new keys still have defaults
+        setConfig({ ...DEFAULTS, ...data });
+      })
+      .catch(() => setConfig(DEFAULTS))
+      .finally(() => setLoading(false));
+  }, []);
 
   const handleChange = (key: string, value: string) => {
     setConfig((prev) => ({ ...prev, [key]: value }));
     setSaved(false);
+    setError('');
   };
 
   const handleSave = async () => {
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setError('');
+    try {
+      const res = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(config),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        setError(d.error || 'Failed to save settings.');
+      } else {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      }
+    } catch {
+      setError('Network error. Could not save settings.');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const handleReset = () => {
+    setConfig(DEFAULTS);
+    setSaved(false);
+    setError('');
+  };
+
+  const handleExport = () => {
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'rentora-config.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 md:p-8 max-w-[1440px]">
+        <div className="h-8 bg-surface-high rounded animate-pulse w-48 mb-2" />
+        <div className="h-4 bg-surface-high rounded animate-pulse w-72" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 md:p-8 max-w-[1440px]">
@@ -74,6 +132,12 @@ export default function AdminConfigPage() {
             <div className="flex items-center gap-1.5 text-emerald-600 text-sm font-medium animate-fade-in">
               <span className="material-symbols-outlined" style={{fontSize:'18px', fontVariationSettings:"'FILL' 1"}}>check_circle</span>
               Settings saved!
+            </div>
+          )}
+          {error && (
+            <div className="flex items-center gap-1.5 text-red-600 text-sm">
+              <span className="material-symbols-outlined" style={{fontSize:'18px'}}>error</span>
+              {error}
             </div>
           )}
           <button onClick={handleSave} disabled={saving} className="btn-primary py-2.5 px-5">
@@ -117,7 +181,7 @@ export default function AdminConfigPage() {
                       <label className="block text-xs font-semibold text-slate uppercase tracking-wide mb-1.5">{field.label}</label>
                       {field.type === 'select' ? (
                         <select
-                          value={config[field.key]}
+                          value={config[field.key] ?? field.defaultValue}
                           onChange={(e) => handleChange(field.key, e.target.value)}
                           className="input-field text-sm"
                         >
@@ -126,11 +190,12 @@ export default function AdminConfigPage() {
                       ) : (
                         <input
                           type={field.type}
-                          value={config[field.key]}
+                          value={config[field.key] ?? field.defaultValue}
                           onChange={(e) => handleChange(field.key, e.target.value)}
                           placeholder={field.placeholder}
                           className="input-field text-sm"
                           min="0"
+                          step="any"
                         />
                       )}
                     </div>
@@ -152,14 +217,14 @@ export default function AdminConfigPage() {
                   <p className="text-sm font-semibold text-navy">Reset All Settings</p>
                   <p className="text-xs text-slate">Revert all configuration to factory defaults.</p>
                 </div>
-                <button className="btn-danger text-xs py-2 px-4">Reset</button>
+                <button onClick={handleReset} className="btn-danger text-xs py-2 px-4">Reset</button>
               </div>
               <div className="flex items-center justify-between p-4 border border-red-100 rounded-lg">
                 <div>
                   <p className="text-sm font-semibold text-navy">Export Configuration</p>
                   <p className="text-xs text-slate">Download all settings as a JSON backup.</p>
                 </div>
-                <button className="btn-secondary text-xs py-2 px-4">
+                <button onClick={handleExport} className="btn-secondary text-xs py-2 px-4">
                   <span className="material-symbols-outlined" style={{fontSize:'16px'}}>download</span>
                   Export
                 </button>

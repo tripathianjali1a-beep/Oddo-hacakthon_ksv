@@ -83,22 +83,19 @@ of the database structure am I on" — more on that next.
 ### How the database gets created and filled with data
 
 The very first time the app starts, nothing exists yet. The code in `lib/db.ts`
-notices the tables are missing, creates them, and then fills `products` with 8
-realistic demo items and `orders` with 4 example bookings (one overdue, one
-active, one upcoming, one already returned) — so the demo always looks alive,
-even on a fresh checkout. It also creates two login accounts automatically:
-`vendor@rentora.com` (the admin/shop-owner account) and `customer@rentora.com`
-(a normal customer), both with simple demo passwords. This all happens
-automatically — nobody has to run a separate "seed the database" command.
+notices the tables are missing and creates them — but it does **not** insert any
+sample data. The catalog, orders and user accounts all start empty and are
+populated entirely through the app itself: vendors add products and manage
+orders from the admin portal, and customers/vendors are created through the
+signup flow on the login page. There are no built-in demo logins.
 
 **What is a "schema version" and why does it matter?** Every time we change
 what a table looks like (add a column, etc.), we bump a number called
 `SCHEMA_VERSION` in the code. When the app starts and sees the stored version
 is older than the code's version, it wipes and rebuilds the products/orders/
-users tables and re-seeds fresh demo data. This is intentionally simple for a
-hackathon (no complex migration scripts) — the trade-off is that upgrading the
-schema throws away old demo data, which is fine because it's demo data, not
-real customer data.
+users tables (empty). This is intentionally simple (no complex migration
+scripts) — the trade-off is that upgrading the schema throws away existing rows,
+so it's meant for development, not a live database with real customer data.
 
 ---
 

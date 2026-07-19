@@ -10,6 +10,20 @@ const fmtMoney = (n: number) => {
 
 const catColors = ['#D97706', '#0F172A', '#0EA5E9', '#10B981', '#8B5CF6', '#F59E0B', '#64748B'];
 
+function toCsvValue(v: string | number): string {
+  const s = String(v);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+function downloadBlob(content: string, filename: string, type: string) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function AdminReportsPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -24,17 +38,24 @@ export default function AdminReportsPage() {
     ]).then(([o, p, d]) => { setOrders(o); setProducts(p); setDash(d); }).catch(() => {});
   }, []);
 
+  // Range filter actually applied — previously the selector didn't affect anything.
+  const rangedOrders = useMemo(() => {
+    const days = parseInt(range, 10);
+    const cutoff = Date.now() - days * 86_400_000;
+    return orders.filter((o) => Date.parse(o.createdAt) >= cutoff);
+  }, [orders, range]);
+
   const metrics = useMemo(() => {
-    const revenue = orders.reduce((s, o) => s + (o.total - o.deposit), 0);
-    const deposits = orders.reduce((s, o) => s + o.deposit, 0);
-    const avgOrder = orders.length ? revenue / orders.length : 0;
+    const revenue = rangedOrders.reduce((s, o) => s + (o.total - o.deposit), 0);
+    const deposits = rangedOrders.reduce((s, o) => s + o.deposit, 0);
+    const avgOrder = rangedOrders.length ? revenue / rangedOrders.length : 0;
 
     const byStatus: Record<string, number> = {};
-    orders.forEach((o) => { byStatus[o.status] = (byStatus[o.status] || 0) + 1; });
+    rangedOrders.forEach((o) => { byStatus[o.status] = (byStatus[o.status] || 0) + 1; });
 
     const prodMap = new Map(products.map((p) => [p.id, p]));
     const catRevenue: Record<string, number> = {};
-    orders.forEach((o) => {
+    rangedOrders.forEach((o) => {
       const cat = (o.productId && prodMap.get(o.productId)?.category) || 'Other';
       catRevenue[cat] = (catRevenue[cat] || 0) + (o.total - o.deposit);
     });
@@ -42,7 +63,7 @@ export default function AdminReportsPage() {
     const catMax = Math.max(1, ...cats.map((c) => c[1]));
 
     const prodCount: Record<string, { name: string; count: number; rev: number }> = {};
-    orders.forEach((o) => {
+    rangedOrders.forEach((o) => {
       const key = o.item;
       prodCount[key] = prodCount[key] || { name: key, count: 0, rev: 0 };
       prodCount[key].count += 1;
@@ -55,9 +76,23 @@ export default function AdminReportsPage() {
     const utilisation = products.length ? Math.round(((products.length - available) / products.length) * 100) : 0;
 
     return { revenue, deposits, avgOrder, byStatus, cats, catMax, topProducts, topRev, utilisation };
-  }, [orders, products]);
+  }, [rangedOrders, products]);
 
   const trend = dash?.revenueTrend ?? [40, 65, 45, 80, 55, 90, 72];
+
+  const exportReport = () => {
+    const header = ['Order ID', 'Customer', 'Item', 'Status', 'Revenue', 'Deposit', 'Created'];
+    const rows = rangedOrders.map((o) => [o.id, o.customerName, o.item, o.status, o.total - o.deposit, o.deposit, o.createdAt]);
+    const summary = [
+      ['Total Revenue', metrics.revenue],
+      ['Total Orders', rangedOrders.length],
+      ['Avg Order Value', Math.round(metrics.avgOrder)],
+      ['Fleet Utilisation %', metrics.utilisation],
+      [],
+    ];
+    const csv = [...summary, header, ...rows].map((r) => r.map(toCsvValue).join(',')).join('\n');
+    downloadBlob(csv, `rentora-report-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv');
+  };
 
   return (
     <div className="p-6 md:p-8 max-w-[1440px]">
@@ -73,7 +108,7 @@ export default function AdminReportsPage() {
             <option value="30">Last 30 days</option>
             <option value="90">Last quarter</option>
           </select>
-          <button className="btn-secondary text-xs py-2.5 px-4">
+          <button onClick={exportReport} disabled={rangedOrders.length === 0} className="btn-secondary text-xs py-2.5 px-4 disabled:opacity-40">
             <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>download</span>
             Export
           </button>
@@ -84,7 +119,7 @@ export default function AdminReportsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
         {[
           { label: 'Total Revenue', value: fmtMoney(metrics.revenue), icon: 'payments', tone: 'dark' },
-          { label: 'Total Orders', value: String(orders.length), icon: 'receipt_long', tone: 'dark' },
+          { label: 'Total Orders', value: String(rangedOrders.length), icon: 'receipt_long', tone: 'dark' },
           { label: 'Avg Order Value', value: fmtMoney(Math.round(metrics.avgOrder)), icon: 'trending_up', tone: 'dark' },
           { label: 'Fleet Utilisation', value: `${metrics.utilisation}%`, icon: 'donut_large', tone: 'light' },
         ].map((k) => (
@@ -127,7 +162,7 @@ export default function AdminReportsPage() {
               { key: 'returned', label: 'Returned', color: '#64748B' },
             ].map((s) => {
               const count = metrics.byStatus[s.key] || 0;
-              const pct = orders.length ? Math.round((count / orders.length) * 100) : 0;
+              const pct = rangedOrders.length ? Math.round((count / rangedOrders.length) * 100) : 0;
               return (
                 <div key={s.key}>
                   <div className="flex justify-between text-sm mb-1.5">

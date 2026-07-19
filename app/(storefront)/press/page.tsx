@@ -1,16 +1,9 @@
 import PageHero from '@/components/ui/PageHero';
 
 const releases = [
-  { date: 'Jun 2024', title: 'Rentora surpasses 1,200 active listings across 42 cities', tag: 'Company' },
-  { date: 'Apr 2024', title: 'Introducing 24/7 concierge support for every rental', tag: 'Product' },
-  { date: 'Feb 2024', title: 'Rentora raises Series B to expand global equipment marketplace', tag: 'Funding' },
-  { date: 'Nov 2023', title: 'The Rentora Standard: our new certification programme for owners', tag: 'Trust' },
-];
-
-const coverage = [
-  { outlet: 'The Verge', quote: '“The most polished rental experience we’ve tested.”' },
-  { outlet: 'Forbes', quote: '“Rentora is quietly redefining premium access.”' },
-  { outlet: 'TechCrunch', quote: '“Concierge-grade service, marketplace scale.”' },
+  { title: 'Rentora expands its equipment marketplace to new cities', tag: 'Company' },
+  { title: 'Introducing 24/7 concierge support for every rental', tag: 'Product' },
+  { title: 'The Rentora Standard: our certification programme for owners', tag: 'Trust' },
 ];
 
 export default function PressPage() {
@@ -34,7 +27,6 @@ export default function PressPage() {
                 <div>
                   <div className="flex items-center gap-2 mb-1.5">
                     <span className="badge-amber text-[10px]">{r.tag}</span>
-                    <span className="text-slate text-xs">{r.date}</span>
                   </div>
                   <h3 className="text-navy font-semibold text-sm group-hover:text-amber transition-colors leading-snug">{r.title}</h3>
                 </div>
@@ -48,14 +40,10 @@ export default function PressPage() {
         <div className="space-y-6">
           <div className="card p-6">
             <h3 className="text-h3 text-navy mb-4">In the press</h3>
-            <div className="space-y-4">
-              {coverage.map((c) => (
-                <div key={c.outlet} className="border-l-2 border-amber/40 pl-3">
-                  <p className="text-navy text-sm italic leading-relaxed">{c.quote}</p>
-                  <p className="text-slate text-xs font-semibold mt-1">— {c.outlet}</p>
-                </div>
-              ))}
-            </div>
+            <p className="text-slate text-sm leading-relaxed">
+              Media coverage of Rentora will be listed here as it&apos;s published. For press
+              enquiries or to feature us, reach out to our press team below.
+            </p>
           </div>
 
           <div className="card detach detach-dark bg-gradient-to-br from-navy-container to-navy text-white p-6">

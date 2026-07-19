@@ -51,14 +51,16 @@ function OrderConfirmedBanner() {
 export default function HomePage() {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
   // The homepage sells what the catalog actually stocks.
   useEffect(() => {
     fetch('/api/products')
       .then((r) => r.json())
-      .then((data: Product[]) => setProducts(data))
-      .catch(() => setProducts([]));
+      .then((data: Product[]) => setProducts(Array.isArray(data) ? data : []))
+      .catch(() => setProducts([]))
+      .finally(() => setLoading(false));
   }, []);
 
   const submitSearch = (e: React.FormEvent) => {
@@ -78,6 +80,8 @@ export default function HomePage() {
 
   const categoryCount = new Set(products.map((p) => p.category)).size;
   const unitCount = products.reduce((s, p) => s + p.quantity, 0);
+  const rated = products.filter((p) => p.reviews > 0);
+  const avgRating = rated.length ? rated.reduce((s, p) => s + p.rating, 0) / rated.length : 0;
 
   return (
     <div className="overflow-x-hidden">
@@ -156,9 +160,9 @@ export default function HomePage() {
             <Reveal delay={400}>
               <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
                 {[
-                  { n: Math.max(unitCount, 1), s: '+', l: 'Units in fleet' },
-                  { n: Math.max(categoryCount, 1), s: '', l: 'Categories' },
-                  { n: 4.8, s: '★', l: 'Avg Rating', d: 1 },
+                  { n: unitCount, s: '', l: 'Units in fleet' },
+                  { n: categoryCount, s: '', l: 'Categories' },
+                  { n: avgRating, s: '★', l: 'Avg Rating', d: 1 },
                 ].map((t) => (
                   <div key={t.l}>
                     <p className="text-white text-2xl font-bold">
@@ -282,11 +286,17 @@ export default function HomePage() {
           </div>
         </Reveal>
 
-        {products.length === 0 ? (
+        {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="property-card h-80 animate-pulse bg-surface-high" />
             ))}
+          </div>
+        ) : products.length === 0 ? (
+          <div className="text-center py-16">
+            <span className="material-symbols-outlined text-slate/30 block mb-2" style={{ fontSize: '48px' }}>inventory_2</span>
+            <p className="text-slate font-medium">No equipment listed yet.</p>
+            <p className="text-slate/70 text-sm mt-1">New rentals will appear here as vendors add them.</p>
           </div>
         ) : featured.length === 0 ? (
           <p className="text-slate text-center py-16">Nothing matches &ldquo;{searchQuery}&rdquo;.</p>
@@ -414,37 +424,41 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Earnings visual card */}
+              {/* How listing works card */}
               <div className="lg:justify-self-end w-full max-w-[24rem] lg:max-w-none">
                 <div className="detach detach-dark animate-float rounded-2xl bg-white/[0.07] backdrop-blur-xl border border-white/15 p-6 shadow-2xl">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-amber/20 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-amber" style={{ fontSize: '22px' }}>storefront</span>
+                    </div>
                     <div>
-                      <p className="text-on-navy text-xs uppercase tracking-wider">Est. monthly earnings</p>
-                      <p className="text-white font-bold text-3xl mt-1 font-currency">
-                        ₹<CountUp end={248000} />
-                      </p>
+                      <p className="text-on-navy text-xs uppercase tracking-wider">List in minutes</p>
+                      <p className="text-white font-bold text-lg">Rent out your equipment</p>
                     </div>
-                    <span className="badge-green text-[11px]">+18% MoM</span>
                   </div>
 
-                  {/* Mini bar chart */}
-                  <div className="mt-6 flex items-end gap-2 h-24">
-                    {[45, 60, 52, 72, 66, 88, 100].map((h, i) => (
-                      <div key={i} className="flex-1 rounded-t-md bg-gradient-to-t from-amber/40 to-amber" style={{ height: `${h}%` }} />
+                  <ul className="mt-6 space-y-4">
+                    {[
+                      { icon: 'sell', title: 'Set your own rates', desc: 'Hourly, daily, weekly or monthly — you decide.' },
+                      { icon: 'calendar_month', title: 'We handle bookings', desc: 'Live availability, deposits and payments, managed for you.' },
+                      { icon: 'account_balance_wallet', title: 'Secure payouts', desc: 'Get paid on time with full damage protection.' },
+                    ].map((step) => (
+                      <li key={step.title} className="flex items-start gap-3">
+                        <span className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+                          <span className="material-symbols-outlined text-amber" style={{ fontSize: '17px' }}>{step.icon}</span>
+                        </span>
+                        <div>
+                          <p className="text-white text-sm font-semibold">{step.title}</p>
+                          <p className="text-white/60 text-xs leading-relaxed">{step.desc}</p>
+                        </div>
+                      </li>
                     ))}
-                  </div>
-                  <div className="mt-2 flex justify-between text-on-navy text-[10px] uppercase tracking-wide">
-                    {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => <span key={i}>{d}</span>)}
-                  </div>
+                  </ul>
 
-                  <div className="mt-6 pt-5 border-t border-white/10 flex items-center gap-3">
-                    <div className="flex -space-x-2">
-                      {['from-amber to-orange-400', 'from-blue-400 to-blue-600', 'from-emerald-400 to-emerald-600'].map((g, i) => (
-                        <div key={i} className={`w-8 h-8 rounded-full bg-gradient-to-br ${g} ring-2 ring-navy`} />
-                      ))}
-                    </div>
-                    <p className="text-white/80 text-xs">Joined by <span className="text-white font-semibold">1,400+</span> fleet owners</p>
-                  </div>
+                  <Link href="/login" className="btn-primary w-full justify-center mt-6 py-2.5 rounded-xl text-sm">
+                    Start listing
+                    <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>arrow_forward</span>
+                  </Link>
                 </div>
               </div>
             </div>

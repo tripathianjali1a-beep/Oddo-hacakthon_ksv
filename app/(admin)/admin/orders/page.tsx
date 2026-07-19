@@ -1,5 +1,6 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { Suspense, useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { Order } from '@/lib/types';
 
 const badgeFor = (o: Order) => {
@@ -21,6 +22,16 @@ const checklist = [
 ];
 
 export default function AdminOrdersPage() {
+  return (
+    <Suspense>
+      <AdminOrdersContent />
+    </Suspense>
+  );
+}
+
+function AdminOrdersContent() {
+  const searchParams = useSearchParams();
+  const focusId = searchParams.get('focus');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -42,6 +53,18 @@ export default function AdminOrdersPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // Deep-linked from the Dashboard's overdue list (?focus=<orderId>) — open
+  // that order's drawer once, as soon as it's loaded. A ref (not state) guards
+  // this so subsequent reloads (e.g. after processing a return) don't fight
+  // the user by reopening a drawer they just closed.
+  const autoOpened = useRef(false);
+  useEffect(() => {
+    if (!focusId || loading || autoOpened.current) return;
+    const match = orders.find((o) => o.id === focusId);
+    if (match) { openDrawer(match); autoOpened.current = true; }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusId, loading, orders]);
 
   const openDrawer = (order: Order) => {
     setSelectedOrder(order);

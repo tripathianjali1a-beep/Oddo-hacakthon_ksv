@@ -30,6 +30,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [availability, setAvailability] = useState<{ available: boolean; availableQty: number } | null>(null);
   const [addedToCart, setAddedToCart] = useState(false);
   const [fav, setFav] = useState(false);
+  const [shared, setShared] = useState(false);
 
   useEffect(() => {
     fetch(`/api/products/${id}`)
@@ -97,6 +98,19 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const nextImg = () => setSelectedImg((i) => (i + 1) % gallery.length);
   const prevImg = () => setSelectedImg((i) => (i - 1 + gallery.length) % gallery.length);
 
+  const handleShare = async () => {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    if (navigator.share) {
+      try { await navigator.share({ title: product?.name, url }); } catch { /* user cancelled */ }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setShared(true);
+      setTimeout(() => setShared(false), 1800);
+    } catch { /* clipboard unavailable */ }
+  };
+
   const handleAddToCart = () => {
     if (!canAdd) return;
     addToCart({
@@ -148,8 +162,11 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                   <button onClick={() => setFav((f) => !f)} className="w-9 h-9 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-slate hover:scale-105 transition-transform" aria-label="Save">
                     <span className="material-symbols-outlined" style={{ fontSize: '18px', fontVariationSettings: fav ? "'FILL' 1" : "'FILL' 0", color: fav ? '#D97706' : undefined }}>favorite</span>
                   </button>
-                  <button className="w-9 h-9 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-slate hover:scale-105 transition-transform" aria-label="Share">
-                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>ios_share</span>
+                  <button onClick={handleShare} className="relative w-9 h-9 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-slate hover:scale-105 transition-transform" aria-label="Share">
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{shared ? 'check' : 'ios_share'}</span>
+                    {shared && (
+                      <span className="absolute -bottom-8 right-0 whitespace-nowrap bg-navy text-white text-[11px] px-2.5 py-1 rounded-full">Link copied!</span>
+                    )}
                   </button>
                 </div>
               </div>

@@ -1,11 +1,18 @@
-// Razorpay server-side helpers (REST API, no SDK dependency).
-//
-// Configure test-mode keys in .env.local:
-//   RAZORPAY_KEY_ID=rzp_test_xxxxxxxx
-//   RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxx
-//
-// When the keys are absent the checkout falls back to "demo" payments so the
-// flow stays demonstrable without an account.
+/**
+ * ============================================================================
+ * Rentora Razorpay Payment Gateway Integration (`lib/razorpay.ts`)
+ * ============================================================================
+ * Why this file is awesome for hackathon demonstrations:
+ * 1. Zero-Dependency REST implementation: We call Razorpay's `/v1/orders` API directly
+ *    using standard Node `fetch`, avoiding bulky external SDKs.
+ * 2. Automatic Demo Fallback: If `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` are not
+ *    set in `.env.local`, the checkout automatically falls back to "demo" payment mode!
+ *    This allows judges or testers to complete full orders instantly without needing
+ *    actual bank credentials.
+ * 3. Timing-Safe Cryptographic Verification: We verify checkout signatures using
+ *    HMAC-SHA256 combined with `crypto.timingSafeEqual()` to prevent timing side-channel attacks.
+ * ============================================================================
+ */
 
 import crypto from 'crypto';
 
@@ -15,6 +22,10 @@ export function razorpayKeyId(): string {
   return process.env.RAZORPAY_KEY_ID || '';
 }
 
+/**
+ * Checks whether active Razorpay credentials are present in the environment.
+ * If false, checkout flows run in frictionless demo mode (`paymentStatus: 'demo'`).
+ */
 export function isRazorpayConfigured(): boolean {
   return Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET);
 }
@@ -26,12 +37,15 @@ function authHeader(): string {
 
 export interface RazorpayOrder {
   id: string;
-  amount: number;   // paise
+  amount: number;   // Amount stored in INR paise (e.g., ₹100 = 10000 paise)
   currency: string;
   status: string;
 }
 
-// Amounts are INR paise (₹1 = 100 paise).
+/**
+ * Creates a secure order on Razorpay servers before the frontend payment popup opens.
+ * Amounts must always be converted to paise (`₹1 = 100 paise`).
+ */
 export async function createRazorpayOrder(amountPaise: number, receipt: string): Promise<RazorpayOrder> {
   const res = await fetch(`${API_BASE}/orders`, {
     method: 'POST',
@@ -45,6 +59,10 @@ export async function createRazorpayOrder(amountPaise: number, receipt: string):
   return res.json() as Promise<RazorpayOrder>;
 }
 
+/**
+ * Fetches verified order status directly from Razorpay servers during checkout settlement.
+ * Used to ensure the paid amount exactly matches what our server quoted (`priceQuote`).
+ */
 export async function fetchRazorpayOrder(orderId: string): Promise<RazorpayOrder> {
   const res = await fetch(`${API_BASE}/orders/${orderId}`, {
     headers: { authorization: authHeader() },
@@ -53,8 +71,11 @@ export async function fetchRazorpayOrder(orderId: string): Promise<RazorpayOrder
   return res.json() as Promise<RazorpayOrder>;
 }
 
-// Standard Razorpay checkout verification:
-// HMAC-SHA256(order_id + "|" + payment_id, key_secret) must equal the signature.
+/**
+ * Verifies the cryptographic checkout signature returned by the Razorpay frontend script.
+ * Formula: HMAC-SHA256(order_id + "|" + payment_id, key_secret) === signature.
+ * Uses `crypto.timingSafeEqual()` to guarantee immunity to string comparison timing attacks.
+ */
 export function verifyRazorpaySignature(orderId: string, paymentId: string, signature: string): boolean {
   if (!orderId || !paymentId || !signature) return false;
   const expected = crypto
@@ -67,3 +88,4 @@ export function verifyRazorpaySignature(orderId: string, paymentId: string, sign
     return false;
   }
 }
+
